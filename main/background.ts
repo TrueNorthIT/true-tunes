@@ -8,7 +8,46 @@ import { AuthenticationResult, PublicClientApplication } from '@azure/msal-node'
 import http from 'http'
 const isProd = process.env.NODE_ENV === 'production'
 import url from 'url'
+import ElectronStore from 'electron-store'
 export let mainWindow: Electron.BrowserWindow | null = null;
+const Store = require('electron-store');  // Import Electron Store
+
+const SERVICE_NAME = 'TrueTunes';
+const ACCOUNT_NAME = 'user-access-token';
+
+let authResult : AuthenticationResult | null = null;  // Store the AuthenticationResult object in memory
+const msalInstance = new PublicClientApplication(msalConfig);
+const store = new Store();
+
+// Helper function to check if the token is expired
+function isTokenExpired(expiresOn) {
+  if (!expiresOn) return true;  // If no expiry time is stored, consider it expired
+  const currentTime = Math.floor(Date.now() / 1000);  // Current time in seconds
+  return currentTime >= Math.floor(new Date(expiresOn).getTime() / 1000);  // Compare current time with token expiry
+}
+
+// Retrieve the AuthenticationResult from secure storage when the app starts
+// Retrieve the AuthenticationResult from Electron Store when the app starts
+function retrieveStoredAuthResult() {
+  authResult = store.get('authResult');  // Retrieve from Electron Store
+  if (authResult) {
+    console.log('AuthenticationResult retrieved from Electron Store on startup');
+  } else {
+    console.log('No AuthenticationResult found in Electron Store');
+  }
+}
+
+// Store the AuthenticationResult in Electron Store
+function storeAuthResult(authResult) {
+  store.set('authResult', authResult);  // Store in Electron Store
+  console.log('AuthenticationResult stored in Electron Store');
+}
+
+// Clear the stored AuthenticationResult from Electron Store
+function clearAuthResult() {
+  store.delete('authResult');  // Remove from Electron Store
+  console.log('AuthenticationResult cleared from Electron Store');
+}
 
 if (isProd) {
   serve({ directory: 'app' })
@@ -18,7 +57,7 @@ if (isProd) {
 
 ; (async () => {
   await app.whenReady()
-
+  await retrieveStoredAuthResult();
   mainWindow = createWindow('main', {
     width: 1000,
     height: 600,
@@ -44,11 +83,55 @@ ipcMain.on('message', async (event, arg) => {
   event.reply('message', `${arg} World!`)
 })
 
+ipcMain.handle('clear-token', async () => {
+  try {
+    authResult = null;  // Clear the in-memory token
+    clearAuthResult();  // Clear the stored token
+    console.log('Token cleared successfully');
+  } catch (error) {
+    console.error('Error clearing token:', error);
+  }
+});
+
+
+async function acquireTokenSilently() {
+  try {
+    const silentRequest = {
+      account: authResult.account,
+      scopes: authResult.scopes,
+    };
+    const tokenResponse = await msalInstance.acquireTokenSilent(silentRequest);
+    authResult = tokenResponse;  // Update the AuthenticationResult object
+    storeAuthResult(tokenResponse);  // Store the updated result
+
+    console.log('Token refreshed successfully using acquireTokenSilent');
+  } catch (error) {
+    console.error('Error refreshing token silently:', error);
+  }
+}
 
 let server;
-const msalInstance = new PublicClientApplication(msalConfig);
-ipcMain.handle('auth-login', async () : Promise<AuthenticationResult> => {
+ipcMain.handle('auth-login', async (event, loginOptions?: {optimistic: boolean} ) : Promise<AuthenticationResult | null> => {
   return new Promise(async (resolve, reject) => {
+
+    if (authResult && !isTokenExpired(authResult.expiresOn)) {
+      console.log('Using stored token for login');
+      resolve(authResult);  // Return the entire AuthenticationResult object
+      return;
+    }
+  
+    if (authResult && authResult.account) {
+      await acquireTokenSilently();  // Try to refresh the token silently
+      if (authResult) {
+        resolve(authResult);  // Return the refreshed AuthenticationResult
+        return;
+      }
+    }
+
+    if (loginOptions?.optimistic) {
+      resolve(null);
+      return;
+    }
 
     if (server) {
       server.close();
@@ -67,6 +150,7 @@ ipcMain.handle('auth-login', async () : Promise<AuthenticationResult> => {
             scopes: msalConfig.scopes,
             redirectUri: msalConfig.auth.redirectUri,
           });
+          storeAuthResult(tokenResponse);  // Store the result securely
 
           res.end('Login successful! You can close this window.');
           resolve(tokenResponse);

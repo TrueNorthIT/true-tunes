@@ -6,7 +6,7 @@ export const msalConfig = {
         authority: "https://login.microsoftonline.com/526f9dcc-8415-4bb2-9532-a5490a6e7cc1", // The tenant or authority URL
         redirectUri: 'http://localhost:3000/',  // A redirect URI for the Electron app
     },
-    scopes: ["user.read"],  // The scopes you need to request
+    scopes: ["user.read", "offline_access"],  // The scopes you need to request
     system: {
         loggerOptions: {
             loggerCallback: (level, message, containsPii) => {

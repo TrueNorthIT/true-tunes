@@ -14,6 +14,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [account, setAccount] = useState<AuthenticationResult | null>(null);
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
+    useEffect(() => {
+        // Optimistic login to see if we have a token stored
+
+        window.ipc.invoke<AuthenticationResult | null>('auth-login', {optimistic: true}).then((authToken) => {
+            if (authToken) {
+                setAccount(authToken);  // Set account information
+                fetchProfilePicture(authToken.accessToken);  // Fetch and set profile picture
+            }
+        });
+    }, []);
+
     // Fetch the user's profile picture after logging in
     const fetchProfilePicture = async (accessToken: string) => {
         try {
@@ -37,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = () => {
         setAccount(null);
         setProfilePicture(null);  // Clear the profile picture on logout
+        window.ipc.invoke('clear-token');  // Clear the stored tokens
     };
 
     return (

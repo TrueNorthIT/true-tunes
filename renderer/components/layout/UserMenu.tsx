@@ -24,8 +24,7 @@ const UserMenu: React.FC = () => {
                                     width={32}    // Set desired width
                                     height={32}   // Set desired height
                                     className="rounded-full bg-gray-50"
-                                    placeholder="blur"  // Optional: Use blur-up effect for better UX
-                                    blurDataURL="/images/truenorth_logo.png" // This url won't work need to import it right?
+                            
                                 />)
                             : (<Image
                                 src="/images/truenorth_logo.png" 
