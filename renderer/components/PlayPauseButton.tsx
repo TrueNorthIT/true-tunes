@@ -1,7 +1,7 @@
 import { PlayPauseIcon } from "@heroicons/react/24/outline"
 import { useSonosContext } from "./SonosContext"
 
-export function PlayButton() {
+export default function PlayButton() {
     
     const player = useSonosContext()
 

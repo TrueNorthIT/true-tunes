@@ -13,3 +13,17 @@
     @apply text-white font-bold px-4 py-2 rounded bg-blue-600 hover:bg-blue-500;
   }
 }
+
+
+html {
+  @apply bg-gray-900 text-white;
+}
+
+/* Fade out old page and fade in new page */
+.fade-enter-active, .fade-exit-active {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.fade-enter, .fade-exit {
+  opacity: 0;
+}

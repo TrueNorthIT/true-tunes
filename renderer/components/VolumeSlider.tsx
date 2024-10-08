@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from "react";
 import { useSonosContext } from "./SonosContext"
 
-export function VolumeSlider() {
+export default function VolumeSlider() {
     
     const player = useSonosContext();
     const [volume, setVolume] = useState(0);
