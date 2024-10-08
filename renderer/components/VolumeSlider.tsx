@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { useSonosContext } from "./SonosContext"
+import { useSonosContext } from "./providers/SonosContext"
 
 export default function VolumeSlider() {
     

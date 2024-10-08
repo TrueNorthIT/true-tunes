@@ -1,8 +1,9 @@
 import React, { useState, ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { AudioProvider } from '../SonosContext';
+import { AudioProvider } from '../providers/SonosContext';
 import MainContent from './MainContent';
+import { AuthProvider } from '../providers/authProvider';
 
 interface LayoutProps {
     children: ReactNode;
@@ -18,6 +19,8 @@ const Layout: React.FC<LayoutProps> = ({ children, navigation }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
+        <AuthProvider>
+
         <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
             <div>
                 <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} navigation={navigation} />
@@ -27,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children, navigation }) => {
                 </div>
             </div>
         </AudioProvider>
+    </AuthProvider>
     );
 };
 
