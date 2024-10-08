@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import {
   Dialog,
   DialogBackdrop,
@@ -23,6 +23,9 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { AudioProvider, useSonosContext } from '../components/SonosContext'
+import { PlayButton } from '../components/PlayPauseButton'
+import { VolumeSlider } from '../components/VolumeSlider'
 
 const navigation = [
 
@@ -47,19 +50,25 @@ function classNames(...classes) {
 
 export default function Example() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const player = useSonosContext();
 
+  const logTrackData = (metadata) => {
+    console.log(metadata);
+    document.title = "TrueTunes: " + metadata.Title + " - " + metadata.Artist;
+  }
   
+  useEffect(() => {
+    player.connect('Harding Hub').then((result) => {
+      console.log(result);
+    });    
+
+    player.listenToTrackMetadata(logTrackData);
+
+  }, []);
+
 
   return (
-    <>
-      {/*
-        This example requires updating your template:
-
-        ```
-        <html class="h-full bg-white">
-        <body class="h-full">
-        ```
-      */}
+    <AudioProvider>     
       <div>
         <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
           <DialogBackdrop
@@ -154,6 +163,8 @@ export default function Example() {
             <div aria-hidden="true" className="h-6 w-px bg-gray-900/10 lg:hidden" />
 
             <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+              <PlayButton></PlayButton>
+              <VolumeSlider></VolumeSlider>
               <form action="#" method="GET" className="relative flex flex-1">
                 <label htmlFor="search-field" className="sr-only">
                   Search
@@ -224,6 +235,6 @@ export default function Example() {
           {/* Secondary column (hidden on smaller screens) */}
         </aside>
       </div>
-    </>
+    </AudioProvider>
   )
 }

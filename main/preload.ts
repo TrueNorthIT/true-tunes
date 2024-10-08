@@ -14,7 +14,7 @@ const handler = {
     }
   },
 
-  invoke(channel: string, ...args: unknown[]): Promise<any> {
+  invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
     return ipcRenderer.invoke(channel, ...args);
   }
 }

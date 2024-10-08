@@ -6,6 +6,8 @@ import { SonosGroupManager } from './SonosGroupManager'
 
 const isProd = process.env.NODE_ENV === 'production'
 
+export let mainWindow: Electron.BrowserWindow | null = null;
+
 if (isProd) {
   serve({ directory: 'app' })
 } else {
@@ -15,7 +17,7 @@ if (isProd) {
 ;(async () => {
   await app.whenReady()
 
-  const mainWindow = createWindow('main', {
+  mainWindow = createWindow('main', {
     width: 1000,
     height: 600,
     webPreferences: {
@@ -33,7 +35,7 @@ if (isProd) {
 })()
 
 app.on('window-all-closed', () => {
-  app.quit()
+  app.quit()  
 })
 
 ipcMain.on('message', async (event, arg) => {

@@ -1,5 +1,6 @@
-import { SonosDevice, SonosManager } from '@svrooij/sonos'
-import { shell } from 'electron';
+import { SonosDevice, SonosEvents, SonosManager } from '@svrooij/sonos'
+import { ipcMain, shell, webContents } from 'electron';
+import { mainWindow } from './background';
 
 enum SonosService {
     Spotify = 9
@@ -12,8 +13,15 @@ class SonosGroupManager {
 
     constructor() {
         this.manager = new SonosManager();
-
     }
+
+    private ListenToTrackMetadata() {
+        this.coordinator.Events.on(SonosEvents.CurrentTrackMetadata, data => {
+            mainWindow.webContents.send('trackMetadata', data);
+        })
+    }
+
+
 
     public async ConnectToServices() {
         await this.Connect("Office + 1");
@@ -32,6 +40,11 @@ class SonosGroupManager {
         //await this.manager.InitializeWithDiscovery();
         await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.10');
         this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
+        if (!this.coordinator) {
+            throw new Error('Coordinator not found');
+        }
+
+        this.ListenToTrackMetadata();
     }
 
     public async Search(term: string, searchType: string, service: SonosService) {
