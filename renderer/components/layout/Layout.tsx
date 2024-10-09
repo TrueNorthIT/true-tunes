@@ -4,6 +4,7 @@ import Header from './Header';
 import { AudioProvider } from '../providers/SonosContext';
 import MainContent from './MainContent';
 import { AuthProvider } from '../providers/authProvider';
+import CommandPalette from '../commandPalette';
 
 interface LayoutProps {
     children: ReactNode;
@@ -21,6 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children, navigation }) => {
     return (
         <AuthProvider>
             <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
+                <CommandPalette />
                 <div>
                     <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} navigation={navigation} />
                     <div className="lg:pl-20">
