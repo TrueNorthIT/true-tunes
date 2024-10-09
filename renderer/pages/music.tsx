@@ -1,5 +1,6 @@
 'use client'
 
+import NowPlayingCard from "../components/nowPlayingCard";
 import { useSonosContext } from "../components/providers/SonosContext";
 
 
@@ -26,6 +27,9 @@ export default function Music() {
       <div>
         <main className="xl:pl-96">
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
+
+                <NowPlayingCard />
+
                 <pre>{JSON.stringify(sonosState, null, 2)}</pre> {/* Pretty print the JSON */}
 
               {/* Main area */}
