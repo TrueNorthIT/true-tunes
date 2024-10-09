@@ -1,5 +1,5 @@
 import path from 'path'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron'
 import serve from 'electron-serve'
 import { createWindow } from './helpers'
 import { SonosGroupManager } from './SonosGroupManager'
@@ -15,7 +15,7 @@ const Store = require('electron-store');  // Import Electron Store
 const SERVICE_NAME = 'TrueTunes';
 const ACCOUNT_NAME = 'user-access-token';
 
-let authResult : AuthenticationResult | null = null;  // Store the AuthenticationResult object in memory
+let authResult: AuthenticationResult | null = null;  // Store the AuthenticationResult object in memory
 const msalInstance = new PublicClientApplication(msalConfig);
 const store = new Store();
 
@@ -63,8 +63,28 @@ if (isProd) {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      
     },
   })
+
+  mainWindow.setThumbarButtons([
+    {
+      tooltip: 'Previous',
+      icon: nativeImage.createFromPath(path.join(__dirname, 'images/prev.png')),
+      click() { sonosManager.Previous() }
+    },
+    {
+      tooltip: 'Play / Pause',
+      icon: nativeImage.createFromPath(path.join(__dirname, 'images/play_pause.png')),
+      click() { sonosManager.TogglePlayback() }
+    },
+    {
+      tooltip: 'Next',
+      icon: nativeImage.createFromPath(path.join(__dirname, 'images/next.png')),
+      click() { sonosManager.Next() }
+    }
+  ])
+  
 
   if (isProd) {
     await mainWindow.loadURL('app://./music')
@@ -82,6 +102,7 @@ app.on('window-all-closed', () => {
 ipcMain.on('message', async (event, arg) => {
   event.reply('message', `${arg} World!`)
 })
+
 
 ipcMain.handle('clear-token', async () => {
   try {
@@ -112,7 +133,7 @@ async function acquireTokenSilently() {
 }
 
 let server;
-ipcMain.handle('auth-login', async (event, loginOptions?: {optimistic: boolean} ) : Promise<AuthenticationResult | null> => {
+ipcMain.handle('auth-login', async (event, loginOptions?: { optimistic: boolean }): Promise<AuthenticationResult | null> => {
   return new Promise(async (resolve, reject) => {
 
     if (authResult && !isTokenExpired(authResult.expiresOn)) {
@@ -120,7 +141,7 @@ ipcMain.handle('auth-login', async (event, loginOptions?: {optimistic: boolean} 
       resolve(authResult);  // Return the entire AuthenticationResult object
       return;
     }
-  
+
     if (authResult && authResult.account) {
       await acquireTokenSilently();  // Try to refresh the token silently
       if (authResult) {
