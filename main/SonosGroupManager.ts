@@ -42,14 +42,15 @@ class SonosGroupManager {
     
 
     public async ConnectToServices() {
-        await this.Connect("Office + 1");
-        const spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
-        if (this.GetQueue() === undefined) {
-            const loginLink = await spotify?.GetLoginLink();
-            console.log(loginLink?.regUrl);
-            shell.openExternal(loginLink?.regUrl!);
-            const authToken = await spotify?.GetDeviceAuthToken(loginLink!.linkCode);
-            console.log(authToken);
+        try{
+            const spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
+                const loginLink = await spotify?.GetLoginLink();
+                console.log(loginLink?.regUrl);
+                shell.openExternal(loginLink?.regUrl!);
+                const authToken = await spotify?.GetDeviceAuthToken(loginLink!.linkCode);
+                console.log(authToken);
+        }catch(e) {
+            console.log(e);
         }
 
     }
@@ -75,8 +76,13 @@ class SonosGroupManager {
     public async Search(term: string, searchType: string, service: SonosService) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
-            const result = await musicService.Search({ id: searchType, term, index: 0, count: 15 });
-            return result;
+            try{
+                const result = await musicService.Search({ id: searchType, term, index: 0, count: 15 });
+                return result;
+            }catch(e) {
+                console.log(e);
+            }
+            
         }
     }
 

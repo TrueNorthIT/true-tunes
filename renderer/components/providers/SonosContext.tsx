@@ -2,6 +2,9 @@ import React, { createContext, useContext, useMemo, useReducer, useEffect, useSt
 import { Track } from '@svrooij/sonos/lib/models';
 import { ipcService } from './ipcService';
 import { SonosState } from '@svrooij/sonos/lib/models/sonos-state';
+import { MediaList } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import { SonosSearchTypes } from '../../enums/SonosSearchType';
+import { Services } from '../../enums/Services';
 
 interface SonosStateType {
     playbackState: {
@@ -95,6 +98,7 @@ interface SonosActions {
     listenToMuteEvent: () => void;
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
+    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services) => Promise<MediaList>;
 }
 
 export type PlayerAPI = SonosActions & SonosStateType;
@@ -179,6 +183,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 console.log('Play/Pause event received');
                 actions.getPlaybackState();
             });
+        },
+        search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services) => {
+            ipcService.search(searchTerm, searchType, service);
+
+            return null;
         },
 
     };
