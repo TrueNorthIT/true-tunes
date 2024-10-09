@@ -55,8 +55,12 @@ class SonosGroupManager {
     }
 
     public async Connect(groupName: string) {
-        //await this.manager.InitializeWithDiscovery();
-        await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.10');
+        try {
+            await this.manager.InitializeWithDiscovery(2);
+        }catch(e) {
+            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.11');
+        }
+        
         this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
         if (!this.coordinator) {
             throw new Error('Coordinator not found');

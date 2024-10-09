@@ -193,7 +193,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
-        actions.connect("Harding Hub").then( () => {
+        actions.connect("Office + 1").then( () => {
             fetchInitialPlaybackState();
             actions.listenToTrackMetadata();
             actions.listenToMuteEvent();
