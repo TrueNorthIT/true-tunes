@@ -20,17 +20,16 @@ const Layout: React.FC<LayoutProps> = ({ children, navigation }) => {
 
     return (
         <AuthProvider>
-
-        <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
-            <div>
-                <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} navigation={navigation} />
-                <div className="lg:pl-20">
-                    <Header setSidebarOpen={setSidebarOpen} />
-                    <MainContent>{children}</MainContent>
+            <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
+                <div>
+                    <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} navigation={navigation} />
+                    <div className="lg:pl-20">
+                        <Header setSidebarOpen={setSidebarOpen} />
+                        <MainContent>{children}</MainContent>
+                    </div>
                 </div>
-            </div>
-        </AudioProvider>
-    </AuthProvider>
+            </AudioProvider>
+        </AuthProvider>
     );
 };
 

@@ -1,7 +1,11 @@
 'use client'
 
+import { useSonosContext } from "../components/providers/SonosContext";
+
 
 export default function Music() {
+
+  const sonosState = useSonosContext();
 
   // const logTrackData = (metadata) => {
   //   console.log(metadata);
@@ -22,7 +26,7 @@ export default function Music() {
       <div>
         <main className="xl:pl-96">
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
-
+                <pre>{JSON.stringify(sonosState, null, 2)}</pre> {/* Pretty print the JSON */}
 
               {/* Main area */}
               </div>

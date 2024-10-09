@@ -1,9 +1,13 @@
 import { Bars3Icon, BellIcon } from '@heroicons/react/24/solid';
 import { Dispatch, SetStateAction } from 'react';
 import SearchBar from '../SearchBar';
-import PlayPauseButton from '../PlayPauseButton';
-import VolumeSlider from '../VolumeSlider';
+import PlayPauseButton from '../media-controls/PlayPauseButton';
+import VolumeSlider from '../media-controls/VolumeSlider';
 import UserMenu from './UserMenu';
+import BackButton from '../media-controls/BackButton';
+import NextButton from '../media-controls/NextButton';
+import MuteButton from '../media-controls/MuteButton';
+import TrackProgressSlider from '../media-controls/TrackProgress';
 
 interface HeaderProps {
     setSidebarOpen: Dispatch<SetStateAction<boolean>>;
@@ -19,9 +23,13 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => (
         <div aria-hidden="true" className="h-6 w-px bg-gray-900/10 lg:hidden" />
 
         <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <PlayPauseButton />
+            <MuteButton />
             <VolumeSlider />
-            <SearchBar />
+            <BackButton />
+            <PlayPauseButton />
+            <NextButton />
+            <TrackProgressSlider />
+    
             <div className="flex items-center gap-x-4 lg:gap-x-6">
                 <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
                     <span className="sr-only">View notifications</span>

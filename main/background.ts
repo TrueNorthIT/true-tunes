@@ -106,6 +106,7 @@ async function acquireTokenSilently() {
 
     console.log('Token refreshed successfully using acquireTokenSilent');
   } catch (error) {
+    authResult = null;  // Clear the in-memory token
     console.error('Error refreshing token silently:', error);
   }
 }
@@ -246,6 +247,11 @@ ipcMain.handle('getMetadata', async (event, service, id) => {
   return result;
 });
 
+ipcMain.handle('seek', async (event, time) => {
+  await sonosManager.SeekToPosition(time);
+  return 'Seeked';
+});
+
 ipcMain.handle('next', async (event) => {
   await sonosManager.Next();
   return 'Next';
@@ -279,4 +285,9 @@ ipcMain.handle('setVolume', async (event, volume) => {
 ipcMain.handle('jumpToPointInQueue', async (event, index) => {
   await sonosManager.JumpToPointInQueue(index);
   return 'Jumped';
+});
+
+ipcMain.handle('toggleMute', async (event) => {
+  await sonosManager.ToggleMute();
+  return 'Toggled';
 });

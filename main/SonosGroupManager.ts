@@ -1,6 +1,7 @@
 import { SonosDevice, SonosEvents, SonosManager } from '@svrooij/sonos'
 import { ipcMain, shell, webContents } from 'electron';
 import { mainWindow } from './background';
+import { Track } from '@svrooij/sonos/lib/models';
 
 enum SonosService {
     Spotify = 9
@@ -16,12 +17,29 @@ class SonosGroupManager {
     }
 
     private ListenToTrackMetadata() {
-        this.coordinator.Events.on(SonosEvents.CurrentTrackMetadata, data => {
+        this.coordinator.Events.on(SonosEvents.CurrentTrackMetadata, (data: Track) => {
             mainWindow.webContents.send('trackMetadata', data);
         })
     }
 
+    private ListenToVolumeChange() {
+        this.coordinator.Events.on(SonosEvents.Volume, (data: number) => {
+            mainWindow.webContents.send('volume', data);
+        })
+    }
 
+    private ListenToPlayPause() {
+        this.coordinator.Events.on(SonosEvents.PlaybackStopped, () => {
+            mainWindow.webContents.send('playbackState');
+        })
+    }
+
+    private ListenToMute() {
+        this.coordinator.Events.on(SonosEvents.Mute, (data: boolean) => {
+            mainWindow.webContents.send('mute', data);
+        })
+    }
+    
 
     public async ConnectToServices() {
         await this.Connect("Office + 1");
@@ -45,6 +63,9 @@ class SonosGroupManager {
         }
 
         this.ListenToTrackMetadata();
+        this.ListenToVolumeChange();
+        this.ListenToPlayPause();
+        this.ListenToMute();
     }
 
     public async Search(term: string, searchType: string, service: SonosService) {
@@ -91,6 +112,12 @@ class SonosGroupManager {
         }
     }
 
+    public async ToggleMute() {
+        if (this.coordinator) {
+            await this.coordinator.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: !(await this.coordinator.GroupRenderingControlService.GetGroupMute()).CurrentMute});
+        }
+    }
+
     public async Next() {
         if (this.coordinator) {
             await this.coordinator.Next();
@@ -128,6 +155,13 @@ class SonosGroupManager {
         if (this.coordinator) {
             await this.coordinator.SeekTrack(index);
             return 'Jumped';
+        }
+    }
+
+    public async SeekToPosition(position: string) {
+        if (this.coordinator) {
+            await this.coordinator.SeekPosition(position);
+            return 'Seeked';
         }
     }
 
