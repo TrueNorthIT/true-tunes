@@ -55,7 +55,7 @@ class SonosGroupManager {
         try {
             await this.manager.InitializeWithDiscovery(2);
         }catch(e) {
-            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.11');
+            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.13');
         }
         
         this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;

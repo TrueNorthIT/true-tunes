@@ -291,3 +291,4 @@ ipcMain.handle('toggleMute', async (event) => {
   await sonosManager.ToggleMute();
   return 'Toggled';
 });
+

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useReducer, useEffect, useState } from 'react';
-import { Track } from '@svrooij/sonos/lib/models';
+import { BrowseResponse, Track } from '@svrooij/sonos/lib/models';
 import { ipcService } from './ipcService';
 import { SonosState } from '@svrooij/sonos/lib/models/sonos-state';
 import { MediaList } from '@svrooij/sonos/lib/musicservices/smapi-client';
@@ -20,9 +20,9 @@ interface SonosStateType {
         positionInfo: {
             Track: number;
             TrackDuration: string;
-            TrackMetaData: Track; // Use Track type to hold metadata
+            TrackMetaData: Track;
             TrackURI: string;
-            RelTime: string;  // Position in track (optimistic)
+            RelTime: string;
             AbsTime: string;
             RelCount: number;
             AbsCount: number;
@@ -31,19 +31,21 @@ interface SonosStateType {
         volume: number;
     } | null;
     connectionStatus: string;
-
+    queue: Track[]; // Add queue state
 }
 
 const initialState: SonosStateType = {
     playbackState: null,
     connectionStatus: '',
+    queue: [], // Initial empty queue
 };
 
 type SonosAction =
     | { type: 'SET_PLAYBACK_STATE'; payload: SonosStateType['playbackState'] }
     | { type: 'SET_CONNECTION_STATUS'; payload: string }
     | { type: 'SET_VOLUME'; payload: number }
-    | { type: 'UPDATE_REL_TIME'; payload: string };
+    | { type: 'UPDATE_REL_TIME'; payload: string }
+    | { type: 'SET_QUEUE'; payload: BrowseResponse }; // New action for queue
 
 function sonosReducer(state: SonosStateType, action: SonosAction): SonosStateType {
     switch (action.type) {
@@ -76,6 +78,9 @@ function sonosReducer(state: SonosStateType, action: SonosAction): SonosStateTyp
                 };
             }
             return state;
+        case 'SET_QUEUE':
+            if (typeof action.payload.Result === 'string') return;
+            return { ...state, queue: action.payload.Result };
         default:
             return state;
     }
@@ -98,6 +103,7 @@ interface SonosActions {
     listenToMuteEvent: () => void;
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
+    getQueue: () => Promise<Track[]>;
     search: (searchTerm: string, searchType: SonosSearchTypes, service: Services) => Promise<MediaList>;
 }
 
@@ -155,15 +161,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         jumpToPointInQueue: (index: number) => {
             ipcService.jumpToPointInQueue(index);
         },
+        getQueue: async () => {
+            const queue = await ipcService.getQueue();
+            if (typeof queue.Result === 'string') return;
+            dispatch({ type: 'SET_QUEUE', payload: queue });
+            return queue.Result;
+        },
         getConnectionStatus: async () => {
             const status = await ipcService.getConnectionStatus();
             dispatch({ type: 'SET_CONNECTION_STATUS', payload: status });
             return status;
         },
         listenToTrackMetadata: () => {
-            ipcService.listenToTrackMetadata((metadata: Track) => {
+            ipcService.listenToTrackMetadata(async (metadata: Track) => {
                 console.log('Track metadata received:', metadata);
                 actions.getPlaybackState();
+                await actions.getQueue(); // Fetch queue on metadata change
             });
         },
         listenToMuteEvent: () => {
@@ -186,33 +199,29 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         },
         search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services) => {
             const result = await ipcService.search(searchTerm, searchType, service);
-
             return result;
         },
-
     };
 
     useEffect(() => {
-        const fetchInitialPlaybackState = async () => {
+        const fetchInitialState = async () => {
             try {
                 const playbackState = await actions.getPlaybackState();
-                console.log('Initial playback state fetched:', playbackState);
+                await actions.getQueue(); // Fetch queue on mount
+                console.log('Initial playback state and queue fetched:', playbackState);
             } catch (error) {
-                console.error('Error fetching initial playback state:', error);
+                console.error('Error fetching initial state:', error);
             }
         };
 
-        actions.connect("Office + 1").then( () => {
-            fetchInitialPlaybackState();
+        actions.connect('Office + 1').then(() => {
+            fetchInitialState();
             actions.listenToTrackMetadata();
             actions.listenToMuteEvent();
             actions.listenToVolumeEvent();
             actions.listenToPlayPauseEvent();
-        })
-
-
+        });
     }, []); // Empty dependency array ensures this runs only once when the component mounts
-
 
     // Effect for updating optimistic RelTime every second
     useEffect(() => {
@@ -229,22 +238,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (state.playbackState?.transportState === 'PLAYING') {
             const syncInterval = setInterval(async () => {
-
-                const state = await actions.getPlaybackState();    
+                const state = await actions.getPlaybackState();
                 const newRelTime = state.positionInfo.RelTime;
                 const newRelTimeInSeconds = convertRelTimeToSeconds(newRelTime);
                 setOptimisticRelTime(newRelTimeInSeconds);
             }, 5000);
-    
+
             return () => clearInterval(syncInterval);
         }
     }, [state.playbackState?.transportState]);
 
     // Update the document title with the current track info
     useEffect(() => {
-        document.title = `TrueTunes : ${state.playbackState?.positionInfo.TrackMetaData.Title} - ${state.playbackState?.positionInfo.TrackMetaData.Artist} `|| 'TrueTunes';
+        document.title =
+            `TrueTunes : ${state.playbackState?.positionInfo.TrackMetaData.Title} - ${state.playbackState?.positionInfo.TrackMetaData.Artist} ` ||
+            'TrueTunes';
     }, [state.playbackState?.mediaInfo]);
-    
 
     // Function to convert RelTime (string format like "0:02:19") to seconds
     function convertRelTimeToSeconds(relTime: string): number {
@@ -260,7 +269,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     // Update the `RelTime` in the state whenever `optimisticRelTime` changes
     useEffect(() => {
         if (optimisticRelTime !== null && state.playbackState) {
-            const relTimeString = convertSecondsToRelTime(optimisticRelTime)
+            const relTimeString = convertSecondsToRelTime(optimisticRelTime);
             dispatch({ type: 'UPDATE_REL_TIME', payload: relTimeString });
         }
     }, [optimisticRelTime]);
