@@ -185,9 +185,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             });
         },
         search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services) => {
-            ipcService.search(searchTerm, searchType, service);
+            const result = await ipcService.search(searchTerm, searchType, service);
 
-            return null;
+            return result;
         },
 
     };

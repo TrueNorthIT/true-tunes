@@ -44,11 +44,7 @@ class SonosGroupManager {
     public async ConnectToServices() {
         try{
             const spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
-                const loginLink = await spotify?.GetLoginLink();
-                console.log(loginLink?.regUrl);
-                shell.openExternal(loginLink?.regUrl!);
-                const authToken = await spotify?.GetDeviceAuthToken(loginLink!.linkCode);
-                console.log(authToken);
+            console.log(spotify);
         }catch(e) {
             console.log(e);
         }

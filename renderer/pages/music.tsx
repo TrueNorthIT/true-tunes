@@ -2,6 +2,7 @@
 
 import NowPlayingCard from "../components/nowPlayingCard";
 import { useSonosContext } from "../components/providers/SonosContext";
+import SearchBar from "../components/SearchBar";
 
 
 export default function Music() {
@@ -27,6 +28,8 @@ export default function Music() {
       <div>
         <main className="xl:pl-96">
             <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
+
+                <SearchBar />
 
                 <NowPlayingCard />
 
