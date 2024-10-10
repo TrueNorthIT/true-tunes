@@ -34,6 +34,10 @@ interface SonosStateType {
 
 }
 
+interface fullFatSearchResult {
+    [searchType: string]: MediaList;
+}
+
 const initialState: SonosStateType = {
     playbackState: null,
     connectionStatus: '',
@@ -99,6 +103,7 @@ interface SonosActions {
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
     search: (searchTerm: string, searchType: SonosSearchTypes, service: Services) => Promise<MediaList>;
+    fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult[]>;
 }
 
 export type PlayerAPI = SonosActions & SonosStateType;
@@ -189,6 +194,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
             return result;
         },
+        fullFatSearch: async (searchTerm: string, service: Services) => {
+            let results: fullFatSearchResult[] = [];
+            let trackResult = await ipcService.search(searchTerm, SonosSearchTypes.Track, service);
+            let albumResult = await ipcService.search(searchTerm, SonosSearchTypes.Album, service);
+            let artistResult = await ipcService.search(searchTerm, SonosSearchTypes.Artist, service);
+            results[SonosSearchTypes.Track] = trackResult;
+            results[SonosSearchTypes.Album] = albumResult;
+            results[SonosSearchTypes.Artist] = artistResult;
+
+            return results;
+        }
 
     };
 

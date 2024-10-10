@@ -5,26 +5,35 @@ import { Services } from '../enums/Services';
 import TrackEntity, { ITrackEntity } from './result-types/trackEntity';
 import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import React from 'react';
+import ArtistEntity, { IArtistEntity } from './result-types/artistEntity';
+import AlbumEntity, { IAlbumEntity } from './result-types/albumEntity';
 
 const SearchBar: React.FC = () => {
 
     const player = useSonosContext()
 
-    const [results, setResults] = React.useState<ITrackEntity[]>([]);
+    const [trackResults, setTrackResults] = React.useState<ITrackEntity[]>([]);
+    const [artistResults, setArtistResults] = React.useState<IArtistEntity[]>([]);
+    const [albumResults, setAlbumResults] = React.useState<IAlbumEntity[]>([]);
 
     const handleKeyDown = event => {
         if (event.key === 'Enter') {
             event.preventDefault();
             // Search for the query
             
+            player.fullFatSearch(event.target.value, Services.Spotify).then((result) => {
+                console.log(result);
 
-            player.search(event.target.value, SonosSearchTypes.Track, Services.Spotify).then((result) => {
+                let tracks = result[SonosSearchTypes.Track].mediaMetadata;
+                let artists = result[SonosSearchTypes.Artist].mediaCollection;
+                let albums = result[SonosSearchTypes.Album].mediaCollection;
 
-                setResults(result.mediaMetadata.map((entity: ITrackEntity) => entity));
-       
+                setTrackResults(tracks.map((entity: ITrackEntity) => entity));
+                setArtistResults(artists.map((entity: IArtistEntity) => entity));
+                setAlbumResults(albums.map((entity: IAlbumEntity) => entity));
+
             });
-            
-            console.log(results);
+            console.log(artistResults);
         }
     }
 
@@ -52,9 +61,26 @@ const SearchBar: React.FC = () => {
 
         {/* <pre>{JSON.stringify(results, undefined, 2)}</pre> */}
 
+        <h1>Tracks</h1>
         {
-            results.map((entity: ITrackEntity) => {
+            trackResults.map((entity: ITrackEntity) => {
                 return <TrackEntity entity={entity} />
+            })
+
+        }
+
+        <h1>Artists</h1>
+        {
+            artistResults.map((entity: IArtistEntity) => {
+                return <ArtistEntity entity={entity} />
+            })
+
+        }
+
+        <h1>Albums</h1>
+        {
+            albumResults.map((entity: IAlbumEntity) => {
+                return <AlbumEntity entity={entity} />
             })
         }
         </>
