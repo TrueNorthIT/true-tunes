@@ -64,7 +64,7 @@ const SearchBar: React.FC = () => {
         <h1>Tracks</h1>
         {
             trackResults.map((entity: ITrackEntity) => {
-                return <TrackEntity entity={entity} />
+                return <TrackEntity key={entity.id} entity={entity} />
             })
 
         }
@@ -72,7 +72,7 @@ const SearchBar: React.FC = () => {
         <h1>Artists</h1>
         {
             artistResults.map((entity: IArtistEntity) => {
-                return <ArtistEntity entity={entity} />
+                return <ArtistEntity key={entity.id} entity={entity} />
             })
 
         }
@@ -80,7 +80,7 @@ const SearchBar: React.FC = () => {
         <h1>Albums</h1>
         {
             albumResults.map((entity: IAlbumEntity) => {
-                return <AlbumEntity entity={entity} />
+                return <AlbumEntity key={entity.id} entity={entity} />
             })
         }
         </>

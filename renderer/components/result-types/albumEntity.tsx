@@ -1,11 +1,7 @@
 import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 
 export interface IAlbumEntity extends MediaItem {
-    albumMetadata: {
-        albumArtURI: string;
-        artist: string;
-        album: string;
-    }
+    artist: string;
 }
 
 const AlbumEntity: React.FC<{entity: IAlbumEntity}> = (props) =>  {
@@ -19,7 +15,9 @@ const AlbumEntity: React.FC<{entity: IAlbumEntity}> = (props) =>  {
             />
             <div>
                 <h2 className="text-lg font-semibold">{props?.entity?.title}</h2>
-                
+                <div className='flex'>
+                    <h3 className='text-gray-400'>{props?.entity?.artist}</h3>
+                </div>
             </div>
         </div>
     );
