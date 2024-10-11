@@ -4,7 +4,7 @@ import { useAuth } from '../providers/authProvider'; // Import the Auth context
 import Image from 'next/image';
 
 const UserMenu: React.FC = () => {
-    const { account, login, logout, profilePicture } = useAuth(); // Access login, logout, and account from the Auth context
+    const { userDetails, login, logout } = useAuth(); // Access login, logout, and account from the Auth context
 
     const userNavigation = [
         { name: 'Your Profile', href: '#' }, // Placeholder for profile navigation
@@ -13,13 +13,13 @@ const UserMenu: React.FC = () => {
 
     return (
         <Menu as="div" className="relative">
-            {account ? (
+            {userDetails ? (
                 <>
                     <MenuButton className="-m-1.5 flex items-center p-1.5">
                         <span className="sr-only">Open user menu</span>
-                        {profilePicture ? (
+                        {userDetails.profilePicture ? (
                                 <Image
-                                    src={profilePicture}
+                                    src={userDetails.profilePicture}
                                     alt="User profile"
                                     width={32}    // Set desired width
                                     height={32}   // Set desired height
@@ -36,7 +36,7 @@ const UserMenu: React.FC = () => {
                         }
                         <span className="hidden lg:flex lg:items-center">
                             <span aria-hidden="true" className="ml-4 text-sm font-semibold leading-6 text-gray-900">
-                                {account.account?.name || 'User'}
+                                {userDetails.name || 'User'}
                             </span>
                             <ChevronDownIcon aria-hidden="true" className="ml-2 h-5 w-5 text-gray-400" />
                         </span>
