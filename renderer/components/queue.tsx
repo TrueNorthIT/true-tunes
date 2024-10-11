@@ -49,8 +49,9 @@ export default function Queue() {
             // Mark this scroll as programmatic
             isProgrammaticScrollRef.current = true;
 
+            // debugger;
             // Scroll only the div container, not the entire viewport
-            const targetScrollTop = trackElement.offsetTop - container.clientHeight / 2; // Center the track in view
+            const targetScrollTop = trackElement.offsetTop  - (container.clientHeight + (isSmall ? 600 : 100)) / 2; // Center the track in view
 
             container.scrollTo({
                 top: targetScrollTop,
