@@ -13,7 +13,7 @@ export interface ITrackEntity extends MediaItem {
     }
 }
 
-const TrackEntity: React.FC<{ entity: ITrackEntity | Track, playing: boolean }> = (props) => {
+const TrackEntity: React.FC<{ entity: ITrackEntity | Track, playing: boolean, small: boolean }> = (props) => {
 
     const [track, setTrack] = useState<Track>();
 
@@ -47,7 +47,7 @@ const TrackEntity: React.FC<{ entity: ITrackEntity | Track, playing: boolean }> 
 
     return (
         <div className="flex items-center space-x-4 m-2 hover:bg-gray-800 cursor-pointer p-2 overflow-hidden">
-            <div className="relative w-16 h-16">
+            <div className={"relative w-16 h-16 " + (props.small ? "w-8 h-8" : " ")}>
                 {/* Album art image */}
                 <ImageWithFallback
                     src={track?.AlbumArtUri}
@@ -55,7 +55,7 @@ const TrackEntity: React.FC<{ entity: ITrackEntity | Track, playing: boolean }> 
                     alt={track?.Title}
                     width={100}
                     height={100}
-                    className="w-16 h-16 max-w-16 max-h-16 rounded-lg"
+                    className={"w-full h-full max-w-16 max-h-16 rounded-lg " + (props.small ? "min-w-8 min-h-8 " : "min-w-16 min-h-16 ") }
                     objectFit="cover"
                 />
 

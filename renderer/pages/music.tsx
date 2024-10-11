@@ -5,6 +5,8 @@ import NowPlayingCard from "../components/nowPlayingCard";
 import { useSonosContext } from "../components/providers/SonosContext";
 import Queue from "../components/queue";
 import SearchBar from "../components/SearchBar";
+import QueueHeader from "../components/QueueHeader";
+import { QueueProvider } from "../components/providers/QueueProvider";
 
 
 export default function Music() {
@@ -13,7 +15,7 @@ export default function Music() {
 
 
   const [sidebarWidth, setSidebarWidth] = useState(640); // 40rem in pixels
-  const [sidebarHeight, setSidebarHeight] = useState(0); 
+  const [sidebarHeight, setSidebarHeight] = useState(0);
 
   const asideRef = useRef(null);
   const mainRef = useRef(null);
@@ -63,21 +65,20 @@ export default function Music() {
       onMouseUp={handleMouseUp}
     >
       {/* Sidebar */}
-      <aside
-        ref={asideRef}
-        style={{ width: `${sidebarWidth}px`, height: `${sidebarHeight}px` }}
-        className="relative flex-shrink-0  px-4 py-6 sm:px-6 lg:px-8 h-full"
-      >
-        <div ref={nowPlayingCard}>
-          <NowPlayingCard />
-        </div>
-        <div className={"overflow-y-auto mt-4 slick-scrollbar h-full"}>
-          <Queue />
-        </div>
-        {/* Resizer Handle */}
+      <aside ref={asideRef} style={{ width: `${sidebarWidth}px`, height: `${sidebarHeight}px` }} className="relative flex-shrink-0  px-4 py-6 sm:px-6 lg:px-8 h-full" >
+        <QueueProvider>
+
+          <div ref={nowPlayingCard}>
+            <NowPlayingCard />
+            <QueueHeader/> 
+            
+          </div>
+          <div className={"overflow-y-auto mt-4 slick-scrollbar h-full"}>
+            <Queue />
+          </div>
+        </QueueProvider>
       </aside>
 
-      {/* Main Content */}
       <main
         ref={mainRef}
         className="flex-grow px-4 py-10 sm:px-6 lg:px-8 lg:py-6 relative"
@@ -86,9 +87,8 @@ export default function Music() {
           onMouseDown={handleMouseDown}
           className="absolute left-0 right-0  top-0 h-full w-2 cursor-col-resize bg-gray-300"
         ></div>
-        
-            <pre>{JSON.stringify(sonosState, null, 2)}</pre> {/* Pretty print the JSON */}
-            
+
+
         <SearchBar />
       </main>
     </div>

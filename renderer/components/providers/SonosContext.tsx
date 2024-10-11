@@ -35,10 +35,284 @@ interface SonosStateType {
 }
 
 const initialState: SonosStateType = {
-    playbackState: null,
-    connectionStatus: '',
-    queue: [], // Initial empty queue
-};
+    "playbackState": {
+        "mediaInfo": {
+            "NrTracks": 20,
+            "MediaDuration": "NOT_IMPLEMENTED",
+            "CurrentURI": "x-rincon-queue:RINCON_000E588DE3D801400#0",
+            "PlayMedium": "NETWORK",
+            "RecordMedium": "NOT_IMPLEMENTED",
+            "WriteStatus": "NOT_IMPLEMENTED"
+        },
+        "muted": false,
+        "positionInfo": {
+            "Track": 1,
+            "TrackDuration": "0:04:36",
+            "TrackMetaData": {
+                "Album": "Moon Music (Full Moon Edition)",
+                "Artist": "Coldplay, Jon Hopkins",
+                "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+                "Title": "MOON MUSiC",
+                "UpnpClass": "object.item.audioItem.musicTrack",
+                "Duration": "0:04:36",
+                "ItemId": "-1",
+                "ParentId": "-1",
+                "TrackUri": "x-sonos-http:track/391126375.flac?sid=174&flags=24608&sn=7",
+                "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+            },
+            "TrackURI": "x-sonos-http:track/391126375.flac?sid=174&flags=24608&sn=7",
+            "RelTime": "0:00:38",
+            "AbsTime": "NOT_IMPLEMENTED",
+            "RelCount": 2147483647,
+            "AbsCount": 2147483647
+        },
+        "transportState": "STOPPED",
+        "volume": 11
+    },
+    "connectionStatus": "Connected",
+    "queue": [
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay, Jon Hopkins",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "MOON MUSiC",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:04:36",
+            "ItemId": "Q:0/1",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126375.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "feelslikeimfallinginlove",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:56",
+            "ItemId": "Q:0/2",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126377.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay, Little Simz, Burna Boy, Elyanna, Tini",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "WE PRAY",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:53",
+            "ItemId": "Q:0/3",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126379.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "JUPiTER",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:04:01",
+            "ItemId": "Q:0/4",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126381.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay, Ayra Starr",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "GOOD FEELiNGS",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:37",
+            "ItemId": "Q:0/5",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126382.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "🌈",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:06:10",
+            "ItemId": "Q:0/6",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126384.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "iAAM",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:03",
+            "ItemId": "Q:0/7",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126385.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "AETERNA",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:04:13",
+            "ItemId": "Q:0/8",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126386.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "ALL MY LOVE",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:43",
+            "ItemId": "Q:0/9",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126388.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "ONE WORLD",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:06:48",
+            "ItemId": "Q:0/10",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126389.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "Moon Music (Elodie)",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:02:46",
+            "ItemId": "Q:0/11",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126391.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "feelslikeimfallinginlive",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:04:36",
+            "ItemId": "Q:0/12",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126392.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "The Karate Kid",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:02:55",
+            "ItemId": "Q:0/13",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126395.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay, Little Simz, Burna Boy, Elyanna, Tini",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "We Pray (Be Our Guest)",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:53",
+            "ItemId": "Q:0/14",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126396.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "Angelsong",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:04:22",
+            "ItemId": "Q:0/15",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126397.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "Jupiter (Single Version)",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:02:53",
+            "ItemId": "Q:0/16",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126399.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "Man in The Moon",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:55",
+            "ItemId": "Q:0/17",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126405.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "i Am A Mountain",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:03:07",
+            "ItemId": "Q:0/18",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126410.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "All My Love (Live in Dublin)",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:04:06",
+            "ItemId": "Q:0/19",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126413.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        },
+        {
+            "Album": "Moon Music (Full Moon Edition)",
+            "Artist": "Coldplay",
+            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
+            "Title": "👋",
+            "UpnpClass": "object.item.audioItem.musicTrack",
+            "Duration": "0:02:33",
+            "ItemId": "Q:0/20",
+            "ParentId": "Q:0",
+            "TrackUri": "x-sonos-http:track/391126417.flac?sid=174&flags=24608&sn=7",
+            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
+        }
+    ]
+}
 
 type SonosAction =
     | { type: 'SET_PLAYBACK_STATE'; payload: SonosStateType['playbackState'] }

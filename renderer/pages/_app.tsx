@@ -48,7 +48,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, [router.pathname]);
 
   return (
-    <div className=''>
+    <div className='h-screen overflow-y-hidden'>
 
       <Layout navigation={navigation}>
         <Component {...pageProps} />

@@ -1,194 +1,129 @@
 import { useSonosContext } from "./providers/SonosContext";
 import Image, { StaticImageData } from "next/image";
-import { useEffect, useState } from "react";
+import { createRef, useEffect, useRef, useState } from "react";
 
 import truenorth_logo from "../public/images/truenorth_logo.png";
 import TrackEntity from "./result-types/trackEntity";
 import { Track } from "@svrooij/sonos/lib/models";
+import { useQueue } from "./providers/QueueProvider";
 
 export default function Queue() {
+    const queue = useQueue();
+    const trackRefs = useRef([]); // Array to store refs for each track
+    const queueContainerRef = useRef<HTMLDivElement>(null); // Ref for the div containing the tracks
 
-    const player = useSonosContext();
+    const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState(queue.currentTrackIndex);
+    const isProgrammaticScrollRef = useRef(false); // Track programmatic scrolls
+    const [isSmall, setIsSmall] = useState(false);
 
+    // Set up refs for each track in the queue
+    if (trackRefs.current.length !== queue.queue.length) {
+        trackRefs.current = Array(queue.queue.length)
+            .fill(null)
+            .map((_, i) => trackRefs.current[i] || createRef());
+    }
 
-    const fakeQueue: Track[] = [
-        {
-            Artist: "Radiohead",
-            Title: "Karma Police",
-            Album: "OK Computer",
-            AlbumArtUri: "https://link-to-album-art.com/radiohead_ok_computer.jpg"
-        },
-        {
-            Artist: "Daft Punk",
-            Title: "Get Lucky",
-            Album: "Random Access Memories",
-            AlbumArtUri: "https://link-to-album-art.com/daft_punk_ram.jpg"
-        },
-        {
-            Artist: "Kendrick Lamar",
-            Title: "HUMBLE.",
-            Album: "DAMN.",
-            AlbumArtUri: "https://link-to-album-art.com/kendrick_lamar_damn.jpg"
-        },
-        {
-            Artist: "Arctic Monkeys",
-            Title: "Do I Wanna Know?",
-            Album: "AM",
-            AlbumArtUri: "https://link-to-album-art.com/arctic_monkeys_am.jpg"
-        },
-        {
-            Artist: "The Beatles",
-            Title: "Come Together",
-            Album: "Abbey Road",
-            AlbumArtUri: "https://link-to-album-art.com/beatles_abbey_road.jpg"
-        },
-        {
-            Artist: "Tame Impala",
-            Title: "The Less I Know The Better",
-            Album: "Currents",
-            AlbumArtUri: "https://link-to-album-art.com/tame_impala_currents.jpg"
-        },
-        {
-            Artist: "Billie Eilish",
-            Title: "Bad Guy",
-            Album: "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?",
-            AlbumArtUri: "https://link-to-album-art.com/billie_eilish_when_we_all_fall_asleep.jpg"
-        },
-        {
-            Artist: "Fleetwood Mac",
-            Title: "Dreams",
-            Album: "Rumours",
-            AlbumArtUri: "https://link-to-album-art.com/fleetwood_mac_rumours.jpg"
-        },
-        {
-            Artist: "The Weeknd",
-            Title: "Blinding Lights",
-            Album: "After Hours",
-            AlbumArtUri: "https://link-to-album-art.com/weeknd_after_hours.jpg"
-        },
-        {
-            Artist: "Nirvana",
-            Title: "Smells Like Teen Spirit",
-            Album: "Nevermind",
-            AlbumArtUri: "https://link-to-album-art.com/nirvana_nevermind.jpg"
-        },
-        {
-            Artist: "Coldplay",
-            Title: "Fix You",
-            Album: "X&Y",
-            AlbumArtUri: "https://link-to-album-art.com/coldplay_x_y.jpg"
-        },
-        {
-            Artist: "Adele",
-            Title: "Hello",
-            Album: "25",
-            AlbumArtUri: "https://link-to-album-art.com/adele_25.jpg"
-        },
-        {
-            Artist: "Led Zeppelin",
-            Title: "Stairway to Heaven",
-            Album: "Led Zeppelin IV",
-            AlbumArtUri: "https://link-to-album-art.com/led_zeppelin_iv.jpg"
-        },
-        {
-            Artist: "Taylor Swift",
-            Title: "Shake It Off",
-            Album: "1989",
-            AlbumArtUri: "https://link-to-album-art.com/taylor_swift_1989.jpg"
-        },
-        {
-            Artist: "Post Malone",
-            Title: "Circles",
-            Album: "Hollywood's Bleeding",
-            AlbumArtUri: "https://link-to-album-art.com/post_malone_hollywoods_bleeding.jpg"
-        },
-        {
-            Artist: "Pink Floyd",
-            Title: "Wish You Were Here",
-            Album: "Wish You Were Here",
-            AlbumArtUri: "https://link-to-album-art.com/pink_floyd_wish_you_were_here.jpg"
-        },
-        {
-            Artist: "Ed Sheeran",
-            Title: "Shape of You",
-            Album: "Divide",
-            AlbumArtUri: "https://link-to-album-art.com/ed_sheeran_divide.jpg"
-        },
-        {
-            Artist: "The Rolling Stones",
-            Title: "Paint It Black",
-            Album: "Aftermath",
-            AlbumArtUri: "https://link-to-album-art.com/rolling_stones_aftermath.jpg"
-        },
-        {
-            Artist: "Queen",
-            Title: "Bohemian Rhapsody",
-            Album: "A Night at the Opera",
-            AlbumArtUri: "https://link-to-album-art.com/queen_night_at_the_opera.jpg"
-        },
-        {
-            Artist: "Michael Jackson",
-            Title: "Billie Jean",
-            Album: "Thriller",
-            AlbumArtUri: "https://link-to-album-art.com/michael_jackson_thriller.jpg"
-        },
-        {
-            Artist: "Beyoncé",
-            Title: "Halo",
-            Album: "I Am... Sasha Fierce",
-            AlbumArtUri: "https://link-to-album-art.com/beyonce_sasha_fierce.jpg"
-        },
-        {
-            Artist: "Drake",
-            Title: "God's Plan",
-            Album: "Scorpion",
-            AlbumArtUri: "https://link-to-album-art.com/drake_scorpion.jpg"
-        },
-        {
-            Artist: "The Killers",
-            Title: "Mr. Brightside",
-            Album: "Hot Fuss",
-            AlbumArtUri: "https://link-to-album-art.com/killers_hot_fuss.jpg"
-        },
-        {
-            Artist: "Frank Ocean",
-            Title: "Thinkin Bout You",
-            Album: "Channel Orange",
-            AlbumArtUri: "https://link-to-album-art.com/frank_ocean_channel_orange.jpg"
-        },
-        {
-            Artist: "Lana Del Rey",
-            Title: "Summertime Sadness",
-            Album: "Born to Die",
-            AlbumArtUri: "https://link-to-album-art.com/lana_del_rey_born_to_die.jpg"
-        }
-    ];
-
-    const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState(8);
-
+    // Update currently playing track index based on arrow key presses
     useEffect(() => {
         const onKeyPress = (e: KeyboardEvent) => {
             if (e.key === "ArrowLeft") {
-                setCurrentlyPlayingIndex((prev) => prev - 1);
+                setCurrentlyPlayingIndex((prev) => Math.max(prev - 1, 0)); // Prevent negative index
             } else if (e.key === "ArrowRight") {
-                setCurrentlyPlayingIndex((prev) => prev + 1);
+                setCurrentlyPlayingIndex((prev) => Math.min(prev + 1, queue.queue.length - 1)); // Prevent overflow
             }
         };
 
-        window.addEventListener('keydown', onKeyPress);
+        window.addEventListener("keydown", onKeyPress);
 
         return () => {
-            window.removeEventListener('keydown', onKeyPress);
-        }
-    }, []);
+            window.removeEventListener("keydown", onKeyPress);
+        };
+    }, [queue.queue.length]);
 
+    // Scroll to the currently playing track when queue.followingQueue is true
+    useEffect(() => {
+        if (queue.followingQueue && trackRefs.current[currentlyPlayingIndex] && queueContainerRef.current) {
+            const trackElement = trackRefs.current[currentlyPlayingIndex].current;
+            const container = queueContainerRef.current;
+
+            // Mark this scroll as programmatic
+            isProgrammaticScrollRef.current = true;
+
+            // Scroll only the div container, not the entire viewport
+            const targetScrollTop = trackElement.offsetTop - container.clientHeight / 2; // Center the track in view
+
+            container.scrollTo({
+                top: targetScrollTop,
+                behavior: "smooth",
+            });
+
+            // Allow manual scroll detection again after a brief delay
+            setTimeout(() => {
+                isProgrammaticScrollRef.current = false;
+            }, 500); // Reset after scroll finishes
+        }
+    }, [queue.followingQueue, currentlyPlayingIndex]);
+
+    // Handle manual scrolling from mouse wheel or touch events
+    const handleManualScroll = () => {
+        if (isProgrammaticScrollRef.current) {
+            // Ignore the event if it was a programmatic scroll
+            return;
+        }
+
+        // If it's a manual scroll, set followingQueue to false
+        if (queue.followingQueue) {
+            queue.setFollowingQueue(false); // Disable followingQueue after manual scroll
+        }
+    };
+
+    // Listen for manual scroll events: mouse wheel and touchmove
+    useEffect(() => {
+        const container = queueContainerRef.current;
+        if (!container) return;
+
+        // Attach event listeners for wheel (mouse scroll) and touchmove (touch devices)
+        container.addEventListener('wheel', handleManualScroll);
+        container.addEventListener('touchmove', handleManualScroll);
+
+        return () => {
+            // Cleanup event listeners
+            container.removeEventListener('wheel', handleManualScroll);
+            container.removeEventListener('touchmove', handleManualScroll);
+        };
+    }, [queue.followingQueue]);
+
+    
+    useEffect(() => {
+        const updateScreenSize = () => {
+            if (queueContainerRef.current) {
+                setIsSmall(queueContainerRef.current.clientWidth <= 392);
+            }
+        };
+
+        // Call the function once on mount
+        updateScreenSize();
+
+
+    }, [queueContainerRef.current?.clientWidth]);
 
     return (
-        <div>
-            {
-                fakeQueue.map((track, index) => (<TrackEntity key={index} entity={track} playing={currentlyPlayingIndex === index} />))
-            }
-
+        <div
+            ref={queueContainerRef}
+            className="overflow-y-auto h-full slick-scrollbar"
+        >
+            {queue.queue.map((track, index) => (
+                <div
+                    key={index}
+                    ref={trackRefs.current[index]} // Assign ref to each track
+                >
+                    <TrackEntity
+                        entity={track}
+                        playing={currentlyPlayingIndex === index}
+                        small={isSmall}
+                    />
+                </div>
+            ))}
         </div>
     );
 }
