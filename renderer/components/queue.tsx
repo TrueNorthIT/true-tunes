@@ -1,11 +1,47 @@
-import { useSonosContext } from "./providers/SonosContext";
-import Image, { StaticImageData } from "next/image";
-import { createRef, useEffect, useRef, useState } from "react";
-
-import truenorth_logo from "../public/images/truenorth_logo.png";
+import { createRef, useEffect, useRef, useState, useCallback } from "react";
 import TrackEntity from "./result-types/trackEntity";
-import { Track } from "@svrooij/sonos/lib/models";
 import { useQueue } from "./providers/QueueProvider";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
+const ITEM_TYPE = "TRACK";
+
+type DragItem = {
+    index: number;
+};
+
+
+function DraggableTrack({ track, index, moveTrack, currentlyPlayingIndex, isSmall, trackRef }) {
+    const [, ref] = useDrag({
+        type: ITEM_TYPE,
+        item: { index },
+    });
+
+    const [, drop] = useDrop({
+        accept: ITEM_TYPE,
+        hover: (draggedItem: DragItem) => {
+            if (draggedItem.index !== index) {
+                moveTrack(draggedItem.index, index);
+                draggedItem.index = index; // Update dragged item's index
+            }
+        },
+    });
+
+    // Combine drag and drop refs with the track ref
+    const combinedRef = (node) => {
+        ref(node);
+        drop(node);
+        if (trackRef) {
+            trackRef.current = node;
+        }
+    };
+
+    return (
+        <div ref={combinedRef}>
+            <TrackEntity entity={track} playing={currentlyPlayingIndex === index} small={isSmall} />
+        </div>
+    );
+}
 
 export default function Queue() {
     const queue = useQueue();
@@ -23,7 +59,19 @@ export default function Queue() {
             .map((_, i) => trackRefs.current[i] || createRef());
     }
 
-    // Update currently playing track index based on arrow key presses
+    const moveTrack = useCallback((fromIndex, toIndex) => {
+        const updatedQueue = [...queue.queue];
+        const [movedTrack] = updatedQueue.splice(fromIndex, 1);
+        updatedQueue.splice(toIndex, 0, movedTrack);
+
+        if (fromIndex === currentlyPlayingIndex) {
+            setCurrentlyPlayingIndex(toIndex);
+        }
+
+        // Update the queue with the rearranged tracks
+        queue.setQueue(updatedQueue);
+    }, [queue]);
+
     useEffect(() => {
         const onKeyPress = (e: KeyboardEvent) => {
             if (e.key === "ArrowLeft") {
@@ -40,61 +88,48 @@ export default function Queue() {
         };
     }, [queue.queue.length]);
 
-    // Scroll to the currently playing track when queue.followingQueue is true
     useEffect(() => {
         if (queue.followingQueue && trackRefs.current[currentlyPlayingIndex] && queueContainerRef.current) {
             const trackElement = trackRefs.current[currentlyPlayingIndex].current;
             const container = queueContainerRef.current;
 
-            // Mark this scroll as programmatic
             isProgrammaticScrollRef.current = true;
 
-            // debugger;
-            // Scroll only the div container, not the entire viewport
-            const targetScrollTop = trackElement.offsetTop  - (container.clientHeight + (isSmall ? 600 : 100)) / 2; // Center the track in view
+            const targetScrollTop = trackElement.offsetTop - (container.clientHeight + (isSmall ? 600 : 100)) / 2;
 
             container.scrollTo({
                 top: targetScrollTop,
                 behavior: "smooth",
             });
 
-            // Allow manual scroll detection again after a brief delay
             setTimeout(() => {
                 isProgrammaticScrollRef.current = false;
-            }, 500); // Reset after scroll finishes
+            }, 500);
         }
     }, [queue.followingQueue, currentlyPlayingIndex]);
 
-    // Handle manual scrolling from mouse wheel or touch events
     const handleManualScroll = () => {
         if (isProgrammaticScrollRef.current) {
-            // Ignore the event if it was a programmatic scroll
             return;
         }
-
-        // If it's a manual scroll, set followingQueue to false
         if (queue.followingQueue) {
-            queue.setFollowingQueue(false); // Disable followingQueue after manual scroll
+            queue.setFollowingQueue(false);
         }
     };
 
-    // Listen for manual scroll events: mouse wheel and touchmove
     useEffect(() => {
         const container = queueContainerRef.current;
         if (!container) return;
 
-        // Attach event listeners for wheel (mouse scroll) and touchmove (touch devices)
-        container.addEventListener('wheel', handleManualScroll);
-        container.addEventListener('touchmove', handleManualScroll);
+        container.addEventListener("wheel", handleManualScroll);
+        container.addEventListener("touchmove", handleManualScroll);
 
         return () => {
-            // Cleanup event listeners
-            container.removeEventListener('wheel', handleManualScroll);
-            container.removeEventListener('touchmove', handleManualScroll);
+            container.removeEventListener("wheel", handleManualScroll);
+            container.removeEventListener("touchmove", handleManualScroll);
         };
     }, [queue.followingQueue]);
 
-    
     useEffect(() => {
         const updateScreenSize = () => {
             if (queueContainerRef.current) {
@@ -102,28 +137,21 @@ export default function Queue() {
             }
         };
 
-        // Call the function once on mount
         updateScreenSize();
-
-
     }, [queueContainerRef.current?.clientWidth]);
 
     return (
-        <div
-            ref={queueContainerRef}
-            className="overflow-y-auto h-full slick-scrollbar"
-        >
+        <div ref={queueContainerRef} className="overflow-y-auto h-full slick-scrollbar">
             {queue.queue.map((track, index) => (
-                <div
+                <DraggableTrack
                     key={index}
-                    ref={trackRefs.current[index]} // Assign ref to each track
-                >
-                    <TrackEntity
-                        entity={track}
-                        playing={currentlyPlayingIndex === index}
-                        small={isSmall}
-                    />
-                </div>
+                    index={index}
+                    track={track}
+                    moveTrack={moveTrack}
+                    currentlyPlayingIndex={currentlyPlayingIndex}
+                    isSmall={isSmall}
+                    trackRef={trackRefs.current[index]}
+                />
             ))}
         </div>
     );

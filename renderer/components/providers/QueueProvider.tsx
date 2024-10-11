@@ -1,5 +1,5 @@
 import { Track } from '@svrooij/sonos/lib/models';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, SetStateAction, useContext, useEffect, useState, Dispatch} from 'react';
 import { useSonosContext } from './SonosContext';
 
 
@@ -8,12 +8,15 @@ interface QueueContextType {
     queue: Track[];
     followingQueue: boolean;
     setFollowingQueue: (value: boolean) => void;
+    setQueue: any;
+
 }
 
 const QueueContext = createContext({
     followingQueue: false,
     setFollowingQueue: (value: boolean) => { },
     queue: [],
+    setQueue: (value: Track[]) => { },
     currentTrackIndex: 0,
 } as QueueContextType);
 
@@ -30,7 +33,7 @@ export const QueueProvider = ({ children }) => {
     }, [sonosContext.queue]);
     
     return (
-        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue, currentTrackIndex }}>
+        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue,  setQueue, currentTrackIndex }}>
             {children}
         </QueueContext.Provider>
     );
