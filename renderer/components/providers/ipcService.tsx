@@ -19,7 +19,7 @@ export const ipcService = {
     seek: (time: string) => {
         window.ipc.invoke('seek', time);
     },
-    next: (): void => {
+    next: (): void => {        
         window.ipc.invoke('next');
     },
     previous: (): void => {

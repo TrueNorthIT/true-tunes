@@ -66,17 +66,6 @@ html {
   transition: width 0.2s ease;
 }
 
-.clamp-text {
-  font-size: clamp(1rem, 2vw + 1rem, 2.5rem); /* Dynamic text scaling */
-}
-
-
-.parent {
-  /* Initial font size and setup */
-  --text-scale: 1;
-  font-size: calc(1rem * var(--text-scale));
-}
-
 .parent h1,
 .parent h2,
 .parent h3 {
@@ -85,12 +74,4 @@ html {
   text-overflow: ellipsis;
 }
 
-.resizable-text {
-  font-size: calc(1rem * var(--text-scale)); /* Dynamically resizable text */
-}
 
-/* The Resize Observer itself */
-.resize-observer {
-  resize: both; /* Allows resizing */
-  overflow: auto; /* Makes content scrollable when resized */
-}
