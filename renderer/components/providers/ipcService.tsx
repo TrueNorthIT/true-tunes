@@ -1,5 +1,6 @@
-import { Track } from "@svrooij/sonos/lib/models";
+import { BrowseResponse, Track } from "@svrooij/sonos/lib/models";
 import { SonosState } from "@svrooij/sonos/lib/models/sonos-state";
+import { MediaList } from "@svrooij/sonos/lib/musicservices/smapi-client";
 
 
 export const ipcService = {
@@ -18,7 +19,7 @@ export const ipcService = {
     seek: (time: string) => {
         window.ipc.invoke('seek', time);
     },
-    next: (): void => {
+    next: (): void => {        
         window.ipc.invoke('next');
     },
     previous: (): void => {
@@ -59,7 +60,11 @@ export const ipcService = {
             callback();
         });
     },
-
-    
+    search: (searchTerm: string, searchType: string, service: number): Promise<MediaList> => {
+        return window.ipc.invoke<MediaList>('search', searchTerm, searchType, service);
+    },
+    getQueue: (): Promise<BrowseResponse> => {
+        return window.ipc.invoke<BrowseResponse>('getQueue');
+    },  
 
 };

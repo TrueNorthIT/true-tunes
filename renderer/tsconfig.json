@@ -1,5 +1,13 @@
 {
   "extends": "../tsconfig.json",
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "paths": {
+      "@components/*": ["./components/*"],
+      "@public/*": ["./public/*"],
+      "@providers/*": ["./components/providers/*"],
+      "@enums/*": ["./enums/*"],
+    }
+  }
 }

@@ -89,11 +89,11 @@ ipcMain.handle('connect', async (event, groupName) => {
   return 'Connected';
 });
 
-ipcMain.handle('search', async (event, term, searchType) => {
-  const result = await sonosManager.Search(term, searchType, 9);
+ipcMain.handle('search', async (event, searchTerm, searchType, service) => {
+  const result = await sonosManager.Search(searchTerm, searchType, service);
   return result;
 });
-
+ 
 ipcMain.handle('getQueue', async (event) => {
   const result = await sonosManager.GetQueue();
   return result;
@@ -163,3 +163,4 @@ ipcMain.handle('toggleMute', async (event) => {
   await sonosManager.ToggleMute();
   return 'Toggled';
 });
+

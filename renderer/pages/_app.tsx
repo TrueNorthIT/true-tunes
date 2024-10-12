@@ -46,11 +46,14 @@ function MyApp({ Component, pageProps }: AppProps) {
       router.events.off('routeChangeComplete', handleRouteChange);
     };
   }, [router.pathname]);
-  
+
   return (
-    <Layout navigation={navigation}>
-      <Component {...pageProps} />
-    </Layout>
+    <div className='h-screen overflow-y-hidden'>
+
+      <Layout navigation={navigation}>
+        <Component {...pageProps} />
+      </Layout>
+    </div>
   );
 }
 
