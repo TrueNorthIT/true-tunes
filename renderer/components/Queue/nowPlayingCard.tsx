@@ -1,8 +1,9 @@
-import { useSonosContext } from "./providers/SonosContext";
+import { useSonosContext } from "@providers/SonosContext";
 import Image, { StaticImageData } from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext"; // Import the provider
 
-import truenorth_logo from "../public/images/truenorth_logo.png";
+import truenorth_logo from "@public/images/truenorth_logo.png";
 
 export default function NowPlayingCard() {
     const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(truenorth_logo);
@@ -12,10 +13,16 @@ export default function NowPlayingCard() {
 
     const player = useSonosContext();
 
-    const container = useRef<HTMLDivElement>(null);
-
     const [isSmall, setIsSmall] = useState(false);
 
+    const { registerBreakpoint } = useAsideBreakpoint(); // Access breakpoint context
+
+    let breakpoint: Breakpoint = null;
+    
+    useEffect(() => {
+        breakpoint = registerBreakpoint(400, setIsSmall);
+        return () => breakpoint.unsubscribe();        
+    }, [registerBreakpoint]);
 
     useEffect(() => {
         if (player.playbackState?.positionInfo?.TrackMetaData) {
@@ -34,27 +41,12 @@ export default function NowPlayingCard() {
     }, [player.playbackState]);
 
 
-    useEffect(() => {
-        const updateScreenSize = () => {
-            if (container.current) {
-                setIsSmall(container.current.clientWidth <= 400);
-            }
-        };
-
-        // Call the function once on mount
-        updateScreenSize();
-
-
-    }, [container.current?.clientWidth]);
-
-
     return (
         <div 
-            ref={container}
-            className={"parent flex  p-6 bg-gray-800 text-white rounded-lg shadow-lg w-full h-full " +  (isSmall  ? "flex-col" : "flex-row")}
+            className={"parent flex p-6 bg-gray-800 text-white rounded-lg shadow-lg w-full h-full " + (isSmall ? "flex-col" : "flex-row")}
         >
             {/* Album Art */}
-            <div className={"relative  content-center max-w-64 " +  (isSmall ? "w-full mx-auto max-w-64 mb-4" : "w-1/3 mr-8")}>
+            <div className={"relative content-center max-w-64 " + (isSmall ? "w-full mx-auto max-w-64 mb-4" : "w-1/3 mr-8")}>
                 <Image
                     src={albumArtUri}
                     alt={albumName}
@@ -67,7 +59,7 @@ export default function NowPlayingCard() {
             </div>
 
             {/* Track Info */}
-            <div className="flex flex-col justify-center flex-grow  space-y-2 overflow-auto">
+            <div className="flex flex-col justify-center flex-grow space-y-2 overflow-auto">
                 <div>
                     <label className="text-gray-400 text-sm">Track</label>
                     <h1 className="font-semibold" title={trackName}>
@@ -88,6 +80,5 @@ export default function NowPlayingCard() {
                 </div>
             </div>
         </div>
-
     );
 }

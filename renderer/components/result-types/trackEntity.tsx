@@ -1,10 +1,9 @@
 import { Track } from '@svrooij/sonos/lib/models';
 import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import { useEffect, useState } from 'react';
-import ImageWithFallback from '../ImageWithFallback';
-import missing_album_art from '../../public/images/missing_album_art.png';
-import ContextMenu from '../ContextMenu';
-import { useContextMenuManager } from '../providers/ContextMenuProvider';
+import ImageWithFallback from '@components/ImageWithFallback';
+import missing_album_art from '@public/images/missing_album_art.png';
+import { useContextMenuManager } from '@providers/ContextMenuProvider';
 
 export interface ITrackEntity extends MediaItem {
     trackMetadata: {
@@ -58,7 +57,11 @@ const TrackEntity: React.FC<{ entity: ITrackEntity | Track, playing: boolean, sm
 
     return (
             <div
-                className={"flex items-center space-x-4 m-2 hover:bg-gray-800 cursor-pointer p-2 overflow-hidden relative active:bg-gray-900 " + (menuOpened ? "bg-gray-800" : "")}
+                className={
+                    "flex items-center space-x-4 m-2 hover:bg-gray-800 cursor-pointer p-2 overflow-hidden relative active:bg-gray-900" 
+                    + (menuOpened ?" bg-gray-800" : "")
+                    + (props.small ? " p-0" : " p-2")
+                }
                 onContextMenu={launchContextMenu}> 
                 <div className={"relative w-16 h-16 " + (props.small ? "w-8 h-8" : " ")}>
                     <ImageWithFallback
