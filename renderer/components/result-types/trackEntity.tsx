@@ -11,21 +11,19 @@ export interface ITrackEntity extends MediaItem {
 const TrackEntity: React.FC<{entity: ITrackEntity}> = (props) =>  {
 
     return (
-        <div className="flex items-center space-x-4 m-2">
-            <img
-                src={props?.entity?.trackMetadata?.albumArtURI}
-                alt={props?.entity?.title}
-                className="w-16 h-16 rounded-sm"
-            />
-            <div>
-                <h2 className="text-lg font-semibold">{props?.entity?.title}</h2>
-                <div className='flex'>
-                    <h3 className='text-gray-400'>{props?.entity?.trackMetadata?.artist}</h3>
-                     <em className='text-gray-400'>&nbsp;-&nbsp;</em>
-                     <h3 className='text-gray-400 font-semibold'>{props?.entity?.trackMetadata?.album}</h3>
-                </div>
-                
-            </div>
+        <div
+          className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-gray-950 px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400"
+        >
+          <div className="flex-shrink-0">
+            <img alt="" src={props?.entity?.trackMetadata?.albumArtURI} className="h-14 w-14 rounded-sm" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <a href="#" className="focus:outline-none">
+              <span aria-hidden="true" className="absolute inset-0" />
+              <p className="text-sm font-medium text-gray-50">{props?.entity?.title}</p>
+              <p className="truncate text-sm text-gray-300">{props?.entity?.trackMetadata?.artist}</p>
+            </a>
+          </div>
         </div>
     );
 }

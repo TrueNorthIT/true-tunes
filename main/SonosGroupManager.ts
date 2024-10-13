@@ -69,11 +69,11 @@ class SonosGroupManager {
         this.ListenToMute();
     }
 
-    public async Search(term: string, searchType: string, service: SonosService) {
+    public async Search(term: string, searchType: string, service: SonosService, resultCount: number) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
             try{
-                const result = await musicService.Search({ id: searchType, term, index: 0, count: 15 });
+                const result = await musicService.Search({ id: searchType, term, index: 0, count: resultCount });
                 return result;
             }catch(e) {
                 console.log(e);

@@ -217,8 +217,8 @@ ipcMain.handle('connect', async (event, groupName) => {
   return 'Connected';
 });
 
-ipcMain.handle('search', async (event, searchTerm, searchType, service) => {
-  const result = await sonosManager.Search(searchTerm, searchType, service);
+ipcMain.handle('search', async (event, searchTerm, searchType, service, resultCount) => {
+  const result = await sonosManager.Search(searchTerm, searchType, service, resultCount);
   return result;
 });
  

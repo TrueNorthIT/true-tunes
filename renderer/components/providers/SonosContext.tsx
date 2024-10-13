@@ -102,7 +102,7 @@ interface SonosActions {
     listenToMuteEvent: () => void;
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
-    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services) => Promise<MediaList>;
+    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => Promise<MediaList>;
     fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult[]>;
 }
 
@@ -189,16 +189,16 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 actions.getPlaybackState();
             });
         },
-        search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services) => {
-            const result = await ipcService.search(searchTerm, searchType, service);
+        search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => {
+            const result = await ipcService.search(searchTerm, searchType, service, resultCount);
 
             return result;
         },
         fullFatSearch: async (searchTerm: string, service: Services) => {
             let results: fullFatSearchResult[] = [];
-            let trackResult = await ipcService.search(searchTerm, SonosSearchTypes.Track, service);
-            let albumResult = await ipcService.search(searchTerm, SonosSearchTypes.Album, service);
-            let artistResult = await ipcService.search(searchTerm, SonosSearchTypes.Artist, service);
+            let trackResult = await ipcService.search(searchTerm, SonosSearchTypes.Track, service, 16);
+            let albumResult = await ipcService.search(searchTerm, SonosSearchTypes.Album, service, 9);
+            let artistResult = await ipcService.search(searchTerm, SonosSearchTypes.Artist, service, 9);
             results[SonosSearchTypes.Track] = trackResult;
             results[SonosSearchTypes.Album] = albumResult;
             results[SonosSearchTypes.Artist] = artistResult;
