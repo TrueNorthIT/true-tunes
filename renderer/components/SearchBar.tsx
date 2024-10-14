@@ -60,7 +60,7 @@ const SearchBar: React.FC = () => {
             </div>
 
 
-            <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-1">
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-6 lg:grid-rows-1">
                 <div className="flex p-px lg:col-span-6 h-min">
                     <div className="overflow-hidden rounded-lg bg-gray-800 ring-1 ring-white/15 lg:rounded-t-[2rem] flex-grow">
                         <div className="p-10">
@@ -69,7 +69,7 @@ const SearchBar: React.FC = () => {
                             <div className="border-b-4 border-gray-700 bg-gray-800 pb-3 mb-3">
                                 <h3 className="text-2xl font-semibold leading-6 text-gray-50">Tracks</h3>
                             </div>
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                 {
                                     trackResults.map((entity: ITrackEntity) => {
                                         return <TrackEntity key={entity.id} entity={entity} />
@@ -102,7 +102,7 @@ const SearchBar: React.FC = () => {
                             <div className="border-b-4 border-gray-700 bg-gray-800 pb-3 mb-3">
                                 <h3 className="text-2xl font-semibold leading-6 text-gray-50">Artists</h3>
                             </div>
-                            <ul role="list" className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+                            <ul role="list" className="grid grid-cols-2 gap-x-4 gap-y-20 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-3 xl:gap-x-8">
                                 {
                                     artistResults.map((entity: IArtistEntity) => {
                                         return <ArtistEntity key={entity.id} entity={entity} />
