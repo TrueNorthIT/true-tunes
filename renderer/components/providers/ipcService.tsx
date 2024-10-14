@@ -62,6 +62,9 @@ export const ipcService = {
     },
     search: (searchTerm: string, searchType: string, service: number, resultCount: number): Promise<MediaList> => {
         return window.ipc.invoke<MediaList>('search', searchTerm, searchType, service, resultCount);
+    },
+    playSongNow: (uri: string): void => {
+        window.ipc.invoke('playSongNow', uri);
     }
     
 

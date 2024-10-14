@@ -104,6 +104,7 @@ interface SonosActions {
     listenToPlayPauseEvent: () => void;
     search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => Promise<MediaList>;
     fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult[]>;
+    playSongNow: (uri: string) => void;
 }
 
 export type PlayerAPI = SonosActions & SonosStateType;
@@ -204,7 +205,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             results[SonosSearchTypes.Artist] = artistResult;
 
             return results;
-        }
+        },
+        playSongNow: (uri: string) => {
+            ipcService.playSongNow(uri);
+        },
 
     };
 
@@ -218,7 +222,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
-        actions.connect("Office + 1").then( () => {
+        actions.connect("Dining Room").then( () => {
             fetchInitialPlaybackState();
             actions.listenToTrackMetadata();
             actions.listenToMuteEvent();

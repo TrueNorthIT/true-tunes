@@ -55,7 +55,7 @@ class SonosGroupManager {
         try {
             await this.manager.InitializeWithDiscovery(2);
         }catch(e) {
-            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.11');
+            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.15');
         }
         
         this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
@@ -173,8 +173,16 @@ class SonosGroupManager {
 
     public async AddToQueue(uri: string) {
         if (this.coordinator) {
-            await this.coordinator.AddUriToQueue
+            await this.coordinator.AddUriToQueue(uri);
             return 'Added';
+        }
+    }
+
+    public async PlaySongNow(uri: string) {
+        if (this.coordinator) {
+            await this.coordinator.SetAVTransportURI(uri);
+            await this.coordinator.Play();
+            return 'Playing';
         }
     }
 

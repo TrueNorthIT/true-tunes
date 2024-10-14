@@ -291,3 +291,8 @@ ipcMain.handle('toggleMute', async (event) => {
   await sonosManager.ToggleMute();
   return 'Toggled';
 });
+
+ipcMain.handle('playSongNow', async (event, uri) => {
+  await sonosManager.PlaySongNow(uri);
+  return 'Playing';
+});
