@@ -173,8 +173,21 @@ class SonosGroupManager {
 
     public async AddToQueue(uri: string) {
         if (this.coordinator) {
-            await this.coordinator.AddUriToQueue
+            await this.coordinator.AddUriToQueue(uri)
             return 'Added';
+        }
+    }
+
+    public async ReorderTracksInQueue(startingIndex: number, numberOfTracks: number, insertBefore: number){
+        if (this.coordinator) {
+            await this.coordinator.AVTransportService.ReorderTracksInQueue({
+                InstanceID: 0,
+                StartingIndex: startingIndex,
+                NumberOfTracks: numberOfTracks,
+                InsertBefore: insertBefore,
+                UpdateID: 0
+            });
+            return 'Reordered';
         }
     }
 

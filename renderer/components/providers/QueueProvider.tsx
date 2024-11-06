@@ -8,8 +8,7 @@ interface QueueContextType {
     queue: Track[];
     followingQueue: boolean;
     setFollowingQueue: (value: boolean) => void;
-    setQueue: any;
-
+    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
 }
 
 const QueueContext = createContext({
@@ -18,22 +17,23 @@ const QueueContext = createContext({
     queue: [],
     setQueue: (value: Track[]) => { },
     currentTrackIndex: 0,
+    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => { }
 } as QueueContextType);
 
 export const QueueProvider = ({ children }) => {
-    const [followingQueue, setFollowingQueue] = useState(false);
-    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-    const [queue, setQueue] = useState<Track[]>([]);
-
     const sonosContext = useSonosContext();
 
-    useEffect(() => {
-        setQueue(sonosContext.queue);
-        setCurrentTrackIndex(sonosContext.playbackState.positionInfo.Track);
-    }, [sonosContext.queue]);
-    
+    const [followingQueue, setFollowingQueue] = useState(false);
+    const [queue, setQueue] = useState<Track[]>([]);
+
+    const reorderTracksInQueue =(startingIndex: number, numberOfTracks: number, insertBefore: number) => {
+        sonosContext.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+    }
+
+    useEffect(() => setQueue(sonosContext.queue), [sonosContext.queue]);
+
     return (
-        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue,  setQueue, currentTrackIndex }}>
+        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue, reorderTracksInQueue, currentTrackIndex: sonosContext.playbackState.positionInfo.Track }}>
             {children}
         </QueueContext.Provider>
     );

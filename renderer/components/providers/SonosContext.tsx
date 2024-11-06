@@ -379,6 +379,7 @@ interface SonosActions {
     listenToPlayPauseEvent: () => void;
     getQueue: () => Promise<Track[]>;
     search: (searchTerm: string, searchType: SonosSearchTypes, service: Services) => Promise<MediaList>;
+    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
 }
 
 export type PlayerAPI = SonosActions & SonosStateType;
@@ -475,6 +476,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             const result = await ipcService.search(searchTerm, searchType, service);
             return result;
         },
+        reorderTracksInQueue: async (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
+            ipcService.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+        }
     };
 
     useEffect(() => {

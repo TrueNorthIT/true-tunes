@@ -14,17 +14,19 @@ type DraggableTrackProps = {
 };
 
 export default function DraggableTrack({ index, moveTrack, trackRef, children }: DraggableTrackProps) {
-    const [, ref] = useDrag({
+    const [{ isDragging }, ref] = useDrag({
         type: ITEM_TYPE,
         item: { index },
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+        }),
     });
 
     const [, drop] = useDrop({
         accept: ITEM_TYPE,
-        hover: (draggedItem: DragItem) => {
+        drop: (draggedItem: DragItem) => {
             if (draggedItem.index !== index) {
                 moveTrack(draggedItem.index, index);
-                draggedItem.index = index; // Update dragged item's index
             }
         },
     });
@@ -40,7 +42,7 @@ export default function DraggableTrack({ index, moveTrack, trackRef, children }:
     };
 
     return (
-        <div ref={combinedRef}>
+        <div ref={combinedRef} style={{ opacity: isDragging ? 0.5 : 1 }}>
             {children}
         </div>
     );

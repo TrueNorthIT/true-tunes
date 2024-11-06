@@ -164,3 +164,12 @@ ipcMain.handle('toggleMute', async (event) => {
   return 'Toggled';
 });
 
+ipcMain.handle('addToQueue', async (event, uri) => {
+  await sonosManager.AddToQueue(uri);
+  return 'Added';
+});
+
+ipcMain.handle('reorderTracksInQueue', async (event, startingIndex, numberOfTracks, insertBefore) => {
+  await sonosManager.ReorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+  return 'Reordered';
+});

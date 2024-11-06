@@ -66,5 +66,8 @@ export const ipcService = {
     getQueue: (): Promise<BrowseResponse> => {
         return window.ipc.invoke<BrowseResponse>('getQueue');
     },  
+    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
+        window.ipc.invoke('reorderTracksInQueue', startingIndex, numberOfTracks, insertBefore);
+    }
 
 };

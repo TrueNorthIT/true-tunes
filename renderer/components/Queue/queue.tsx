@@ -1,6 +1,5 @@
 import { createRef, useRef, useState, useCallback, useEffect } from "react";
 import { useQueue } from "@providers/QueueProvider";
-import { useCurrentTrack } from "@components/Queue/useCurrentTrack";
 import { useScrollToCurrentTrack } from "@components/Queue/useScrollToCurrentTrack";
 import { useHandleManualScroll } from "@components/Queue/useHandleManualScroll";
 import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext"; // Import the breakpoint context
@@ -14,6 +13,10 @@ export default function Queue() {
     const queueContainerRef = useRef<HTMLDivElement>(null); // Ref for the div containing the tracks
 
     const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState(queue.currentTrackIndex);
+    useEffect(() => {
+        setCurrentlyPlayingIndex(queue.currentTrackIndex - 1);
+    }, [queue.currentTrackIndex]);
+    
     const [isSmall, setIsSmall] = useState(false);
     const [hideALbumArt, setHideAlbumArt] = useState(false);
 
@@ -39,24 +42,11 @@ export default function Queue() {
     }
 
     const moveTrack = useCallback((fromIndex, toIndex) => {
-        const updatedQueue = [...queue.queue];
-        const [movedTrack] = updatedQueue.splice(fromIndex, 1);
-        updatedQueue.splice(toIndex, 0, movedTrack);
-
-        if (fromIndex === currentlyPlayingIndex) {
-            setCurrentlyPlayingIndex(toIndex);
-        }
-
-        if (toIndex === currentlyPlayingIndex) {
-            setCurrentlyPlayingIndex(fromIndex);
-        }
-
-        // Update the queue with the rearranged tracks
-        queue.setQueue(updatedQueue);
+        if (toIndex === fromIndex+1) toIndex += 1;
+        console.log(`We are moving track from ${fromIndex+1} to before ${toIndex+1}`);
+        queue.reorderTracksInQueue(fromIndex+1, 1, toIndex+1);        
     }, [queue, currentlyPlayingIndex]);
 
-    // Handle key events for track navigation
-    useCurrentTrack(queue, setCurrentlyPlayingIndex);
 
     // Handle scrolling to the current track
     const isProgrammaticScrollRef = useScrollToCurrentTrack(
