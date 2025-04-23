@@ -20,6 +20,8 @@ export default function Queue() {
     const [isSmall, setIsSmall] = useState(false);
     const [hideALbumArt, setHideAlbumArt] = useState(false);
 
+    const selectedTracks: number[] = [];
+
     // Get access to the breakpoint system
     const { registerBreakpoint } = useAsideBreakpoint();
     let breakpoint_400: Breakpoint = null;
@@ -42,9 +44,39 @@ export default function Queue() {
     }
 
     const moveTrack = useCallback((fromIndex, toIndex) => {
-        if (toIndex === fromIndex+1) toIndex += 1;
-        console.log(`We are moving track from ${fromIndex+1} to before ${toIndex+1}`);
-        queue.reorderTracksInQueue(fromIndex+1, 1, toIndex+1);        
+        fromIndex += 1;
+        if (toIndex === fromIndex) toIndex += 1;
+        console.log(`We are moving track from ${fromIndex} to before ${toIndex+1}`);
+
+        if (!selectedTracks.includes(fromIndex-1)) {
+            selectedTracks.reverse();
+            selectedTracks.push(fromIndex-1);
+            selectedTracks.reverse();
+        }
+
+        console.log('Selected Tracks: ', selectedTracks);
+
+        // Now we have to move the selected items as well. selectedTracks may not be contiguous, so we have to split it into an array of contiguous ranges
+        let contiguousRanges = selectedTracks.reduce((acc: number[][], num: number, index: number) => {
+            if (index === 0 || num !== selectedTracks[index - 1] + 1) acc.push([num]);
+            else acc[acc.length - 1].push(num);            
+            return acc;
+        }, []);
+
+        console.log('Contiguous Ranges: ', contiguousRanges);
+
+        
+
+        // Now we have to move the contiguous ranges
+        contiguousRanges.forEach((range) => {
+            // If the range is before the insertion point, we have to adjust the insertion point
+            if (range[0] < fromIndex && range[range.length-1] < toIndex) toIndex -= range.length;
+            // If the range is after the insertion point, we have to adjust the insertion point
+            else if (range[0] > fromIndex && range[range.length-1] > toIndex) toIndex += range.length;
+
+            queue.reorderTracksInQueue(range[0]+1, range.length, toIndex+1);
+        });
+
     }, [queue, currentlyPlayingIndex]);
 
 
@@ -76,6 +108,10 @@ export default function Queue() {
                         playing={currentlyPlayingIndex === index}
                         small={isSmall}
                         showImage={!hideALbumArt}
+                        onSelectChange={(isSelected) => {
+                            if (isSelected) selectedTracks.push(index);
+                            else selectedTracks.splice(selectedTracks.indexOf(index), 1);
+                        }}
                     />
                     <Seperator></Seperator>
                 </DraggableTrack>

@@ -75,3 +75,15 @@ html {
 }
 
 
+.track-entity {
+  --checkbox-opacity: 0;
+}
+
+.track-entity:hover {
+  --checkbox-opacity: 1;
+}
+
+.checkbox {
+  @apply opacity-0 transition-opacity duration-200;
+  opacity: var(--checkbox-opacity);
+}
