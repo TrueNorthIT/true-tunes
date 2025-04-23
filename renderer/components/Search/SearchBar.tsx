@@ -3,6 +3,8 @@ import { useSonosContext } from '@providers/SonosContext';
 import { SonosSearchTypes } from '@enums/SonosSearchType';
 import { Services } from '@enums/Services';
 import TrackEntity, { ITrackEntity } from '@components/result-types/trackEntity';
+import ArtistEntity, { IArtistEntity } from '@components/result-types/artistEntity';
+import AlbumEntity, { IAlbumEntity } from '@components/result-types/albumEntity';
 import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import React from 'react';
 
@@ -11,6 +13,8 @@ const SearchBar: React.FC = () => {
     const player = useSonosContext()
 
     const [results, setResults] = React.useState<ITrackEntity[]>([]);
+    const [artistResults, setArtistResults] = React.useState<IArtistEntity[]>([]);
+    const [albumResults, setAlbumResults] = React.useState<IAlbumEntity[]>([]);
 
     const [searchType, setSearchType] = React.useState(SonosSearchTypes.Track);
 
@@ -21,9 +25,13 @@ const SearchBar: React.FC = () => {
 
 
             player.search(event.target.value, searchType, Services.Spotify, 10).then((result) => {
-
-                setResults(result.mediaMetadata?.map((entity: ITrackEntity) => entity));
-
+                if (searchType === SonosSearchTypes.Track) {
+                    setResults(result.mediaMetadata?.map((entity: ITrackEntity) => entity));
+                } else if (searchType === SonosSearchTypes.Artist) {
+                    setArtistResults(result.mediaCollection?.map((entity: IArtistEntity) => entity));
+                } else if (searchType === SonosSearchTypes.Album) {
+                    setAlbumResults(result.mediaCollection?.map((entity: IAlbumEntity) => entity));
+                }
             });
 
             console.log(results);
@@ -69,9 +77,19 @@ const SearchBar: React.FC = () => {
             {/* <pre>{JSON.stringify(results, undefined, 2)}</pre> */}
 
             {
-                results?.map((entity: ITrackEntity) => {
-                    return <TrackEntity entity={entity} small={false} playing={false} showImage={true} isSearchResult={true} />
-                })
+                searchType === SonosSearchTypes.Track && results?.map((entity: ITrackEntity) => (
+                    <TrackEntity entity={entity} small={false} playing={false} showImage={true} isSearchResult={true} />
+                ))
+            }
+            {
+                searchType === SonosSearchTypes.Artist && artistResults?.map((entity: IArtistEntity) => (
+                    <ArtistEntity entity={entity}   />
+                ))
+            }
+            {
+                searchType === SonosSearchTypes.Album && albumResults?.map((entity: IAlbumEntity) => (
+                    <AlbumEntity entity={entity}  />
+                ))
             }
         </>
 
