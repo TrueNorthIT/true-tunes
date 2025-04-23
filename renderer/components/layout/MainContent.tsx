@@ -5,7 +5,7 @@ interface MainContentProps {
 }
 
 const MainContent: React.FC<MainContentProps> = ({ children }) => (
-    <main className="xl:pl-96">
+    <main>
         {children}
     </main>
 );

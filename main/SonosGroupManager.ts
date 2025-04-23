@@ -42,14 +42,11 @@ class SonosGroupManager {
     
 
     public async ConnectToServices() {
-        await this.Connect("Office + 1");
-        const spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
-        if (this.GetQueue() === undefined) {
-            const loginLink = await spotify?.GetLoginLink();
-            console.log(loginLink?.regUrl);
-            shell.openExternal(loginLink?.regUrl!);
-            const authToken = await spotify?.GetDeviceAuthToken(loginLink!.linkCode);
-            console.log(authToken);
+        try{
+            const spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
+            console.log(spotify);
+        }catch(e) {
+            console.log(e);
         }
 
     }
@@ -58,7 +55,7 @@ class SonosGroupManager {
         try {
             await this.manager.InitializeWithDiscovery(2);
         }catch(e) {
-            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.11');
+            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.13');
         }
         
         this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
@@ -75,8 +72,13 @@ class SonosGroupManager {
     public async Search(term: string, searchType: string, service: SonosService) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
-            const result = await musicService.Search({ id: searchType, term, index: 0, count: 15 });
-            return result;
+            try{
+                const result = await musicService.Search({ id: searchType, term, index: 0, count: 15 });
+                return result;
+            }catch(e) {
+                console.log(e);
+            }
+            
         }
     }
 
@@ -171,8 +173,21 @@ class SonosGroupManager {
 
     public async AddToQueue(uri: string) {
         if (this.coordinator) {
-            await this.coordinator.AddUriToQueue
+            await this.coordinator.AddUriToQueue(uri)
             return 'Added';
+        }
+    }
+
+    public async ReorderTracksInQueue(startingIndex: number, numberOfTracks: number, insertBefore: number){
+        if (this.coordinator) {
+            await this.coordinator.AVTransportService.ReorderTracksInQueue({
+                InstanceID: 0,
+                StartingIndex: startingIndex,
+                NumberOfTracks: numberOfTracks,
+                InsertBefore: insertBefore,
+                UpdateID: 0
+            });
+            return 'Reordered';
         }
     }
 

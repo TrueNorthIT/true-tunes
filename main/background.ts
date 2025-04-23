@@ -89,11 +89,11 @@ ipcMain.handle('connect', async (event, groupName) => {
   return 'Connected';
 });
 
-ipcMain.handle('search', async (event, term, searchType) => {
-  const result = await sonosManager.Search(term, searchType, 9);
+ipcMain.handle('search', async (event, searchTerm, searchType, service) => {
+  const result = await sonosManager.Search(searchTerm, searchType, service);
   return result;
 });
-
+ 
 ipcMain.handle('getQueue', async (event) => {
   const result = await sonosManager.GetQueue();
   return result;
@@ -162,4 +162,14 @@ ipcMain.handle('jumpToPointInQueue', async (event, index) => {
 ipcMain.handle('toggleMute', async (event) => {
   await sonosManager.ToggleMute();
   return 'Toggled';
+});
+
+ipcMain.handle('addToQueue', async (event, uri) => {
+  await sonosManager.AddToQueue(uri);
+  return 'Added';
+});
+
+ipcMain.handle('reorderTracksInQueue', async (event, startingIndex, numberOfTracks, insertBefore) => {
+  await sonosManager.ReorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+  return 'Reordered';
 });
