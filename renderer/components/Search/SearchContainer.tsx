@@ -16,7 +16,7 @@ const SearchContainer = () => {
                 className="absolute left-0 right-0  top-0 h-full w-2 cursor-col-resize bg-gray-300"
             ></div>
             <SearchBar />
-            <pre>{JSON.stringify(sonosContext, null, 2)}</pre>
+            {/* <pre>{JSON.stringify(sonosContext, null, 2)}</pre> */}
 
         </main>
     )

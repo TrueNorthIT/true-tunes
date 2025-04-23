@@ -107,6 +107,8 @@ export default function Queue() {
                         entity={track}
                         playing={currentlyPlayingIndex === index}
                         small={isSmall}
+                        key={index}
+                        index={index}
                         showImage={!hideALbumArt}
                         onSelectChange={(isSelected) => {
                             if (isSelected) selectedTracks.push(index);

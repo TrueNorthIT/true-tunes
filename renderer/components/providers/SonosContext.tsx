@@ -386,6 +386,7 @@ interface SonosActions {
     playSongNow: (uri: string) => void;
     getQueue: () => Promise<Track[]>;
     reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
+    addToQueue: (uri: string, index?: number) => Promise<void>;
 }
 
 export type PlayerAPI = SonosActions & SonosStateType;
@@ -440,7 +441,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             dispatch({ type: 'SET_VOLUME', payload: volume });
         },
         jumpToPointInQueue: (index: number) => {
-            ipcService.jumpToPointInQueue(index);
+            // Queue is 0-indexed, so we need to add 1 to the index
+            ipcService.jumpToPointInQueue(index + 1);
         },
         getQueue: async () => {
             const queue = await ipcService.getQueue();
@@ -497,6 +499,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         playSongNow: (uri: string) => {
             ipcService.playSongNow(uri);
         },
+        reorderTracksInQueue: async (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
+            ipcService.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+        },
+        addToQueue: async (uri: string, index?: number) => {
+            await ipcService.addToQueue(uri, index);
+            return Promise.resolve();
+        }
 
     };
 
@@ -512,7 +521,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         };
 
         actions.connect('Office + 1').then(() => {
-            fetchInitialPlaybackState();
+            fetchInitialState();
             actions.listenToTrackMetadata();
             actions.listenToMuteEvent();
             actions.listenToVolumeEvent();

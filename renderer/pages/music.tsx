@@ -7,9 +7,10 @@ export default function Music() {
   const sonosState = useSonosContext();
 
   return (
-      <div>
-        <main className="">
-            <div className="px-4 py-10 sm:px-6 lg:px-8 lg:py-6">
+    <AsideBreakpointProvider>
+      <div className="flex h-screen overflow-y-hidden">
+        <QueueAside />
+        <SearchContainer />
 
       </div>
     </AsideBreakpointProvider>

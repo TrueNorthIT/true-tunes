@@ -171,13 +171,20 @@ class SonosGroupManager {
         }
     }
 
-    public async AddToQueue(uri: string) {
+    public async AddToQueue(uri: string, index?: number) {
         if (this.coordinator) {
-            await this.coordinator.AddUriToQueue(uri)
+            await this.coordinator.AddUriToQueue(uri, index);
             return 'Added';
         }
     }
 
+    public async PlaySongNow(uri: string) {
+        if (this.coordinator) {
+            await this.coordinator.SetAVTransportURI(uri);
+            await this.coordinator.Play();
+            return 'Playing';
+        }
+    }
     public async ReorderTracksInQueue(startingIndex: number, numberOfTracks: number, insertBefore: number){
         if (this.coordinator) {
             await this.coordinator.AVTransportService.ReorderTracksInQueue({

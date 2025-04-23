@@ -71,6 +71,10 @@ export const ipcService = {
     },  
     reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
         window.ipc.invoke('reorderTracksInQueue', startingIndex, numberOfTracks, insertBefore);
+    },
+    addToQueue: (uri: string, index?: number) => {
+        return window.ipc.invoke('addToQueue', uri, index);
     }
+    
 
 };

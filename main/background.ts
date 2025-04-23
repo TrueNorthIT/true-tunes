@@ -164,8 +164,8 @@ ipcMain.handle('toggleMute', async (event) => {
   return 'Toggled';
 });
 
-ipcMain.handle('addToQueue', async (event, uri) => {
-  await sonosManager.AddToQueue(uri);
+ipcMain.handle('addToQueue', async (event, uri, index) => {
+  await sonosManager.AddToQueue(uri, index);
   return 'Added';
 });
 

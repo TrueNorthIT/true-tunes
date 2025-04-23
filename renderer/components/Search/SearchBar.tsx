@@ -12,15 +12,17 @@ const SearchBar: React.FC = () => {
 
     const [results, setResults] = React.useState<ITrackEntity[]>([]);
 
+    const [searchType, setSearchType] = React.useState(SonosSearchTypes.Track);
+
     const handleKeyDown = event => {
         if (event.key === 'Enter') {
             event.preventDefault();
             // Search for the query
 
 
-            player.search(event.target.value, SonosSearchTypes.Track, Services.Spotify).then((result) => {
+            player.search(event.target.value, searchType, Services.Spotify, 10).then((result) => {
 
-                setResults(result.mediaMetadata.map((entity: ITrackEntity) => entity));
+                setResults(result.mediaMetadata?.map((entity: ITrackEntity) => entity));
 
             });
 
@@ -35,7 +37,7 @@ const SearchBar: React.FC = () => {
                     <label htmlFor="search-field" className="sr-only">Search</label>
                     <MagnifyingGlassIcon
                         aria-hidden="true"
-                        className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400 "
+                        className="pointer-events-none absolute inset-y-0 left-2 h-full w-5 text-gray-400 "
                     />
                     <input
                         id="search-field"
@@ -46,6 +48,20 @@ const SearchBar: React.FC = () => {
                         onKeyDown={handleKeyDown}
                     />
 
+                    {/* Search Type switcher, Track vs Artist */}
+                    <select
+                        id="search-type"
+                        name="search-type"
+                        className="ml-4 w-32 px-4 right-2 top-2 bg-gray-800 text-white rounded-md "
+                        onChange={(e) => {
+                            // Handle search type change
+                            setSearchType(e.target.value as SonosSearchTypes);
+                        }}
+                    >
+                        <option value={SonosSearchTypes.Track}>Track</option>
+                        <option value={SonosSearchTypes.Artist}>Artist</option>
+                        <option value={SonosSearchTypes.Album}>Album</option>
+                    </select>
                 </form>
 
             </div>
@@ -53,8 +69,8 @@ const SearchBar: React.FC = () => {
             {/* <pre>{JSON.stringify(results, undefined, 2)}</pre> */}
 
             {
-                results.map((entity: ITrackEntity) => {
-                    return <TrackEntity entity={entity} small={false} playing={false} />
+                results?.map((entity: ITrackEntity) => {
+                    return <TrackEntity entity={entity} small={false} playing={false} showImage={true} isSearchResult={true} />
                 })
             }
         </>

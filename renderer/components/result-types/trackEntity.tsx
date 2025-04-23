@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ImageWithFallback from '@components/ImageWithFallback';
 import missing_album_art from '@public/images/missing_album_art.png';
 import { useContextMenuManager } from '@providers/ContextMenuProvider';
+import { useSonosContext } from '@components/providers/SonosContext';
 
 export interface ITrackEntity extends MediaItem {
     trackMetadata: {
@@ -16,16 +17,21 @@ export interface ITrackEntity extends MediaItem {
 const TrackEntity: React.FC<{
     entity: ITrackEntity | Track,
     playing: boolean,
+    index?: number, 
     small: boolean,
     showImage?: boolean,
     isSelected?: boolean,
+    isSearchResult?: boolean,
     onSelectChange?: (isSelected: boolean) => void
 }> = (props) => {
+    const player = useSonosContext();
 
     const { handleContextMenu } = useContextMenuManager();
     const [menuOpened, setMenuOpened] = useState(false);
     const [track, setTrack] = useState<Track>();
     const [showAlbumArt, setShowAlbumArt] = useState(true);
+
+
 
     useEffect(() => {
         console.log('Show Image: ', props.showImage);
@@ -51,14 +57,25 @@ const TrackEntity: React.FC<{
                 'Artist': iTrack.trackMetadata.artist,
                 'Title': iTrack.title,
                 'AlbumArtUri': iTrack.trackMetadata.albumArtURI,
+                'TrackUri': iTrack.id
             });
         } else {
             setTrack(props.entity as Track);
         }
     }, [props.entity]);
 
+    const searchContextMenuOptions = [
+        { label: 'Play Now', onClick: async () => {
+            await player.addToQueue(track?.TrackUri, player.playbackState.positionInfo.Track + 1);
+            player.next();
+
+        } },
+        { label: 'Add to Queue', onClick: () => player.addToQueue(track?.TrackUri) },
+        { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
+    ];
+
     const contextMenuOptions = [
-        { label: 'Play Now', onClick: () => console.log('Play clicked') },
+        { label: 'Play Now', onClick: () =>  player.jumpToPointInQueue(props.index)},
         { label: 'Remove from Queue', onClick: () => console.log('Add to Queue clicked') },
         { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
     ];
@@ -66,7 +83,7 @@ const TrackEntity: React.FC<{
     const launchContextMenu = (e) => {
         e.preventDefault();
         setMenuOpened(true);
-        handleContextMenu(e, contextMenuOptions, () => setMenuOpened(false));
+        handleContextMenu(e, props.isSearchResult ? searchContextMenuOptions : contextMenuOptions, () => setMenuOpened(false));
     }
 
     const handleCheckboxChange = (e) => {
@@ -131,9 +148,6 @@ const TrackEntity: React.FC<{
         </div>
     );
 };
-  const handleClick = () => {
-    player.playSongNow(props?.entity?.id);
-  };
-  const player = useSonosContext();
+
 
 export default TrackEntity;
