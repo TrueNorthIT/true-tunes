@@ -1,10 +1,5 @@
-import { useDrag, useDrop } from "react-dnd";
-
-const ITEM_TYPE = "TRACK";
-
-type DragItem = {
-    index: number;
-};
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from '@dnd-kit/utilities';
 
 type DraggableTrackProps = {
     index: number;
@@ -14,36 +9,39 @@ type DraggableTrackProps = {
 };
 
 export default function DraggableTrack({ index, moveTrack, trackRef, children }: DraggableTrackProps) {
-    const [{ isDragging }, ref] = useDrag({
-        type: ITEM_TYPE,
-        item: { index },
-        collect: (monitor) => ({
-            isDragging: monitor.isDragging(),
-        }),
-    });
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        activeIndex
+    } = useSortable({ id: index.toString() });
 
-    const [, drop] = useDrop({
-        accept: ITEM_TYPE,
-        drop: (draggedItem: DragItem) => {
-            if (draggedItem.index !== index) {
-                moveTrack(draggedItem.index, index);
-            }
-        },
-    });
 
-    // Combine drag and drop refs with the track ref
-    const combinedRef = (node: HTMLDivElement | null) => {
-        ref(node);
-        drop(node);
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: activeIndex === index ? 0.5 : 1,
+    };
+    
+
+    const combinedRef = (node: HTMLElement | null) => {
+        setNodeRef(node);
         if (trackRef) {
             //@ts-ignore
             trackRef.current = node;
         }
-    };
+    };    
 
     return (
-        <div ref={combinedRef} style={{ opacity: isDragging ? 0.5 : 1 }}>
-            {children}
-        </div>
+        <div
+        ref={combinedRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+    >
+        {children}
+    </div>
     );
 }

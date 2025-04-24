@@ -5,8 +5,6 @@ import { AudioProvider } from '../providers/SonosContext';
 import MainContent from './MainContent';
 import { AuthProvider } from '../providers/authProvider';
 import { ContextMenuProvider } from '../providers/ContextMenuProvider';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 interface LayoutProps {
     children: ReactNode;
@@ -25,15 +23,13 @@ const Layout: React.FC<LayoutProps> = ({ children, navigation }) => {
         <AuthProvider>
             <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
                 <ContextMenuProvider>
-                    <DndProvider backend={HTML5Backend}>
-                        <div>
-                            <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} navigation={navigation} />
-                            <div className="lg:pl-20">
-                                <Header setSidebarOpen={setSidebarOpen} />
-                                <MainContent>{children}</MainContent>
-                            </div>
+                    <div>
+                        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} navigation={navigation} />
+                        <div className="lg:pl-20">
+                            <Header setSidebarOpen={setSidebarOpen} />
+                            <MainContent>{children}</MainContent>
                         </div>
-                    </DndProvider>
+                    </div>
                 </ContextMenuProvider>
             </AudioProvider>
         </AuthProvider>
