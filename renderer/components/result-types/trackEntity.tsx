@@ -96,7 +96,7 @@ const TrackEntity: React.FC<{
     return (
         <div
             className={
-                "flex items-center group track-entity m-2 hover:bg-gray-800 cursor-pointer p-2 overflow-hidden relative active:bg-gray-900 pr-10" // Add `pr-10`
+                " flex items-center group track-entity w-full hover:bg-gray-800 cursor-pointer p-2 overflow-hidden relative active:bg-gray-900 pr-10" // Add `pr-10`
                 + (menuOpened ? " bg-gray-800" : "")
                 + (props.small ? " p-0" : " p-2")
             }
@@ -146,11 +146,12 @@ const TrackEntity: React.FC<{
             </div>
             <input
                 type="checkbox"
+                checked={props.isSelected}
                 onChange={handleCheckboxChange}
-                className="absolute top-1/2 -translate-y-1/2  right-2 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity"
-
+                className="absolute top-1/2 -translate-y-1/2 right-4 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity"
                 style={{ zIndex: 10 }}
             />
+
 
         </div>
     );

@@ -2,7 +2,7 @@ import { createRef, useRef, useState, useCallback, useEffect } from "react";
 import { useQueue } from "@providers/QueueProvider";
 import { useScrollToCurrentTrack } from "@components/Queue/useScrollToCurrentTrack";
 import { useHandleManualScroll } from "@components/Queue/useHandleManualScroll";
-import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext";
+import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
 import TrackEntity from "@components/result-types/trackEntity";
 import Seperator from "@components/Seperator";
 import {
@@ -11,13 +11,13 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    DragOverlay
 } from "@dnd-kit/core";
 import {
     SortableContext,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { DragOverlay } from "@dnd-kit/core";
-import DraggableTrack from "@components/DraggableTrack ";
+import DraggableTrack from "@components/DraggableTrack";
 
 export default function Queue() {
     const queue = useQueue();
@@ -28,11 +28,9 @@ export default function Queue() {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isSmall, setIsSmall] = useState(false);
     const [hideALbumArt, setHideAlbumArt] = useState(false);
+    const [selectedTracks, setSelectedTracks] = useState<number[]>([]);
+    const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
-    const selectedTracks = useRef<number[]>([]);
-
-
-    // Breakpoint management
     const { registerBreakpoint } = useAsideBreakpoint();
     useEffect(() => {
         const bp400 = registerBreakpoint(400, setIsSmall);
@@ -43,14 +41,10 @@ export default function Queue() {
         };
     }, [registerBreakpoint]);
 
-
-
-    // Sync current track index
     useEffect(() => {
         setCurrentlyPlayingIndex(queue.currentTrackIndex - 1);
     }, [queue.currentTrackIndex]);
 
-    // Scroll to current track
     const isProgrammaticScrollRef = useScrollToCurrentTrack(
         currentlyPlayingIndex,
         trackRefs,
@@ -59,48 +53,65 @@ export default function Queue() {
         isSmall
     );
 
-    // Manual scroll handling
     useHandleManualScroll(queueContainerRef, queue, isProgrammaticScrollRef);
 
     const [optimisticQueue, setOptimisticQueue] = useState(queue.queue);
 
     useEffect(() => {
-        // Whenever the queue changes from source (e.g. Sonos), update local state
         setOptimisticQueue(queue.queue);
     }, [queue.queue]);
 
     const items = optimisticQueue.map((_, i) => i.toString());
 
-        // Setup track refs
-        if (trackRefs.current.length !== optimisticQueue.length) {
-            trackRefs.current = Array(queue.queue.length)
-                .fill(null)
-                .map((_, i) => trackRefs.current[i] || createRef());
+    if (trackRefs.current.length !== optimisticQueue.length) {
+        trackRefs.current = Array(queue.queue.length)
+            .fill(null)
+            .map((_, i) => trackRefs.current[i] || createRef());
+    }
+
+    const sensors = useSensors(useSensor(PointerSensor));
+    const moveTracks = useCallback((fromIndices: number[], toIndex: number) => {
+        console.log("Move Tracks", fromIndices, toIndex);
+
+        const sortedFrom = [...fromIndices].sort((a, b) => a - b);
+        const movingTracks = sortedFrom.map(i => optimisticQueue[i]);
+
+        const withoutTracks = optimisticQueue.filter((_, i) => !sortedFrom.includes(i));
+
+        const isMovingDown = sortedFrom[0] < toIndex;
+        const numRemovedBeforeTarget = sortedFrom.filter(i => i < toIndex).length;
+
+        let insertAt = toIndex - numRemovedBeforeTarget;
+        if (isMovingDown) {
+            insertAt += 1;
         }
 
+        const updatedQueue = [
+            ...withoutTracks.slice(0, insertAt),
+            ...movingTracks,
+            ...withoutTracks.slice(insertAt),
+        ];
 
-    // DnD setup
-    const sensors = useSensors(useSensor(PointerSensor));
+        console.log("Insert at", insertAt, "from", sortedFrom, "to", toIndex);
 
-    const moveTrack = useCallback((fromIndex: number, toIndex: number) => {
-        const oldQueue = [...optimisticQueue];
-
-        // Create updated queue
-        let updatedQueue = [...oldQueue];
-        const [movedTrack] = updatedQueue.splice(fromIndex, 1);
-        updatedQueue.splice(toIndex, 0, movedTrack);
-
-        // Optimistically update the UI
         setOptimisticQueue(updatedQueue);
 
-        // Real reorder attempt
-        queue.reorderTracksInQueue(fromIndex + 1, 1, toIndex + 1)
+        // Backend reorder: one block move
+        queue.reorderTracksInQueue(sortedFrom[0] + 1, sortedFrom.length, insertAt + 1);
+    }, [optimisticQueue, queue]);
 
 
-    }, [queue, optimisticQueue]);
+
+
 
     const handleDragStart = (event) => {
+        const draggedIndex = parseInt(event.active.id);
         setActiveId(event.active.id);
+
+        // Ensure the dragged track is selected
+        setSelectedTracks((prev) =>
+            prev.includes(draggedIndex) ? prev : [draggedIndex]
+        );
     };
 
     const handleDragEnd = (event) => {
@@ -108,10 +119,29 @@ export default function Queue() {
         setActiveId(null);
         if (!over || active.id === over.id) return;
 
-        const fromIndex = parseInt(active.id);
         const toIndex = parseInt(over.id);
+        const fromIndices = [...selectedTracks].sort((a, b) => a - b);
 
-        moveTrack(fromIndex, toIndex);
+        moveTracks(fromIndices, toIndex);
+        setSelectedTracks([])
+    };
+
+    const handleTrackSelect = (index: number, e: React.MouseEvent) => {
+        const isSelected = selectedTracks.includes(index);
+
+        if (e.shiftKey && lastSelectedIndex !== null) {
+            const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
+            const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+            setSelectedTracks((prev) => Array.from(new Set([...prev, ...range])));
+        } else if (e.ctrlKey || e.metaKey) {
+            setSelectedTracks((prev) =>
+                isSelected ? prev.filter((i) => i !== index) : [...prev, index]
+            );
+        } else {
+            setSelectedTracks([index]);
+        }
+
+        setLastSelectedIndex(index);
     };
 
     return (
@@ -126,29 +156,42 @@ export default function Queue() {
                     {items.map((id) => {
                         const index = parseInt(id);
                         const track = optimisticQueue[index];
+                        const isDraggingThis = activeId !== null && selectedTracks.includes(index);
+
+                        if (isDraggingThis) return (
+                            <div key={id} className="h-[72px] opacity-0 pointer-events-none" />
+                        );
 
                         return (
                             <DraggableTrack
                                 key={id}
                                 index={index}
-                                moveTrack={moveTrack}
+                                moveTrack={moveTracks}
                                 trackRef={trackRefs.current[index]}
+                                onGrabHandle={(setActivatorNodeRef, listeners, attributes) => (
+                                    <div
+                                        ref={setActivatorNodeRef}
+                                        {...listeners}
+                                        {...attributes}
+                                        className="mr-3 p-1 text-gray-400 cursor-grab hover:text-white active:cursor-grabbing"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 9h2v2H7V9zm4 0h2v2h-2V9zM7 14h2v2H7v-2zm4 0h2v2h-2v-2z" />
+                                        </svg>
+                                    </div>
+                                )}
                             >
-                                <TrackEntity
-                                    entity={track}
-                                    playing={currentlyPlayingIndex === index}
-                                    small={isSmall}
-                                    index={index}
-                                    showImage={!hideALbumArt}
-                                    onSelectChange={(isSelected) => {
-                                        if (isSelected) {
-                                            selectedTracks.current.push(index);
-                                        } else {
-                                            selectedTracks.current = selectedTracks.current.filter((i) => i !== index);
-                                        }
-                                    }}
-                                />
-                                <Seperator />
+                                <div onClick={(e) => handleTrackSelect(index, e)} className="grow">
+                                    <TrackEntity
+                                        entity={track}
+                                        playing={currentlyPlayingIndex === index}
+                                        small={isSmall}
+                                        index={index}
+                                        showImage={!hideALbumArt}
+                                        isSelected={selectedTracks.includes(index)}
+                                    />
+                                    <Seperator />
+                                </div>
                             </DraggableTrack>
                         );
                     })}
@@ -157,8 +200,15 @@ export default function Queue() {
 
             <DragOverlay>
                 {activeId !== null ? (
-                    <div className="opacity-50">
-                        <TrackEntity entity={queue.queue[parseInt(activeId)]} small={isSmall} playing={false} />
+                    <div className="opacity-50 space-y-1">
+                        {selectedTracks.map((i) => (
+                            <TrackEntity
+                                key={i}
+                                entity={queue.queue[i]}
+                                small={isSmall}
+                                playing={false}
+                            />
+                        ))}
                     </div>
                 ) : null}
             </DragOverlay>

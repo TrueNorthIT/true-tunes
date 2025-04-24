@@ -497,7 +497,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 album: albumResult,
                 artist: artistResult
             }
-          
+    
         },
         playSongNow: (uri: string) => {
             ipcService.playSongNow(uri);

@@ -1,30 +1,34 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
+import React from 'react';
 
 type DraggableTrackProps = {
     index: number;
-    moveTrack: (fromIndex: number, toIndex: number) => void;
+    moveTrack: (fromIndices: number[], toIndex: number) => void;
     trackRef: React.RefObject<HTMLDivElement>;
     children: React.ReactNode;
+    onGrabHandle?: (setActivatorNodeRef: (el: HTMLElement | null) => void, listeners: any, attributes: any) => React.ReactNode;
 };
 
-export default function DraggableTrack({ index, moveTrack, trackRef, children }: DraggableTrackProps) {
+export default function DraggableTrack({
+    index,
+    trackRef,
+    children,
+    onGrabHandle,
+}: DraggableTrackProps) {
     const {
         attributes,
         listeners,
         setNodeRef,
+        setActivatorNodeRef,
         transform,
         transition,
-        activeIndex
     } = useSortable({ id: index.toString() });
-
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: activeIndex === index ? 0.5 : 1,
     };
-    
 
     const combinedRef = (node: HTMLElement | null) => {
         setNodeRef(node);
@@ -32,16 +36,16 @@ export default function DraggableTrack({ index, moveTrack, trackRef, children }:
             //@ts-ignore
             trackRef.current = node;
         }
-    };    
+    };
 
     return (
         <div
-        ref={combinedRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-    >
-        {children}
-    </div>
+            ref={combinedRef}
+            style={style}
+            className="flex items-center" // side-by-side layout
+        >
+            {onGrabHandle && onGrabHandle(setActivatorNodeRef, listeners, attributes)}
+            {children}
+        </div>
     );
 }
