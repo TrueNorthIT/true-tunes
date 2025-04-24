@@ -35,7 +35,9 @@ interface SonosStateType {
 }
 
 interface fullFatSearchResult {
-    [searchType: string]: MediaList;
+    track: MediaList;
+    album: MediaList;
+    artist: MediaList;
 }
 
 const initialState: SonosStateType = {
@@ -382,7 +384,7 @@ interface SonosActions {
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
     search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => Promise<MediaList>;
-    fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult[]>;
+    fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult>;
     playSongNow: (uri: string) => void;
     getQueue: () => Promise<Track[]>;
     reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
@@ -486,15 +488,16 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             return result;
         },
         fullFatSearch: async (searchTerm: string, service: Services) => {
-            let results: fullFatSearchResult[] = [];
-            let trackResult = await ipcService.search(searchTerm, SonosSearchTypes.Track, service, 16);
-            let albumResult = await ipcService.search(searchTerm, SonosSearchTypes.Album, service, 9);
-            let artistResult = await ipcService.search(searchTerm, SonosSearchTypes.Artist, service, 9);
-            results[SonosSearchTypes.Track] = trackResult;
-            results[SonosSearchTypes.Album] = albumResult;
-            results[SonosSearchTypes.Artist] = artistResult;
-
-            return results;
+        
+            let trackResult = await ipcService.search(searchTerm, SonosSearchTypes.Track, service, 12);
+            let albumResult = await ipcService.search(searchTerm, SonosSearchTypes.Album, service, 12);
+            let artistResult = await ipcService.search(searchTerm, SonosSearchTypes.Artist, service, 20);
+            return {
+                track: trackResult,
+                album: albumResult,
+                artist: artistResult
+            }
+          
         },
         playSongNow: (uri: string) => {
             ipcService.playSongNow(uri);

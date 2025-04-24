@@ -17,7 +17,7 @@ export interface ITrackEntity extends MediaItem {
 const TrackEntity: React.FC<{
     entity: ITrackEntity | Track,
     playing: boolean,
-    index?: number, 
+    index?: number,
     small: boolean,
     showImage?: boolean,
     isSelected?: boolean,
@@ -65,17 +65,19 @@ const TrackEntity: React.FC<{
     }, [props.entity]);
 
     const searchContextMenuOptions = [
-        { label: 'Play Now', onClick: async () => {
-            await player.addToQueue(track?.TrackUri, player.playbackState.positionInfo.Track + 1);
-            player.next();
+        {
+            label: 'Play Now', onClick: async () => {
+                await player.addToQueue(track?.TrackUri, player.playbackState.positionInfo.Track + 1);
+                player.next();
 
-        } },
+            }
+        },
         { label: 'Add to Queue', onClick: () => player.addToQueue(track?.TrackUri) },
         { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
     ];
 
     const contextMenuOptions = [
-        { label: 'Play Now', onClick: () =>  player.jumpToPointInQueue(props.index)},
+        { label: 'Play Now', onClick: () => player.jumpToPointInQueue(props.index) },
         { label: 'Remove from Queue', onClick: () => console.log('Add to Queue clicked') },
         { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
     ];
@@ -94,12 +96,14 @@ const TrackEntity: React.FC<{
     return (
         <div
             className={
-                "flex items-center track-entity m-2 hover:bg-gray-800 cursor-pointer p-2 overflow-hidden relative active:bg-gray-900"
+                "flex items-center group track-entity m-2 hover:bg-gray-800 cursor-pointer p-2 overflow-hidden relative active:bg-gray-900 pr-10" // Add `pr-10`
                 + (menuOpened ? " bg-gray-800" : "")
                 + (props.small ? " p-0" : " p-2")
             }
-            onContextMenu={launchContextMenu}>
-            
+            onContextMenu={launchContextMenu}
+        >
+
+
 
             {showAlbumArt && (
                 <div className={"relative w-16 h-16 " + (props.small ? "w-8 h-8" : " ")}>
@@ -143,8 +147,11 @@ const TrackEntity: React.FC<{
             <input
                 type="checkbox"
                 onChange={handleCheckboxChange}
-                className="ml-auto mr-4 opacity-0 checkbox checked:opacity-100"   
+                className="absolute top-1/2 -translate-y-1/2  right-2 opacity-0 group-hover:opacity-100 checked:opacity-100 transition-opacity"
+
+                style={{ zIndex: 10 }}
             />
+
         </div>
     );
 };
