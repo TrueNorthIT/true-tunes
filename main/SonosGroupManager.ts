@@ -3,13 +3,12 @@ import { ipcMain, shell, webContents } from 'electron';
 import { mainWindow } from './background';
 import { Track } from '@svrooij/sonos/lib/models';
 import { Services } from '../renderer/enums/Services';
-import ISonosGroupManager from './ISonosGroupManager';
 
 enum SonosService {
     Spotify = 9
 }
 
-class SonosGroupManager implements ISonosGroupManager {
+class SonosGroupManager {
 
     private manager: SonosManager;
     private coordinator: SonosDevice | undefined;

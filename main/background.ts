@@ -11,7 +11,7 @@ export let mainWindow: Electron.BrowserWindow | null = null;
 
 
 let authManager = new AuthManager();
-
+const sonosManager = new SonosGroupManager();
 
 if (isProd) {
   serve({ directory: 'app' })
@@ -28,7 +28,7 @@ if (isProd) {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      
+
     },
   })
 
@@ -36,20 +36,20 @@ if (isProd) {
     {
       tooltip: 'Previous',
       icon: nativeImage.createFromPath(path.join(__dirname, 'images/prev.png')),
-      click() { window.sonos.Previous() }
+      click() { sonosManager.Previous() }
     },
     {
       tooltip: 'Play / Pause',
       icon: nativeImage.createFromPath(path.join(__dirname, 'images/play_pause.png')),
-      click() { window.sonos.TogglePlayback() }
+      click() { sonosManager.TogglePlayback() }
     },
     {
       tooltip: 'Next',
       icon: nativeImage.createFromPath(path.join(__dirname, 'images/next.png')),
-      click() { window.sonos.Next() }
+      click() { sonosManager.Next() }
     }
   ])
-  
+
 
   if (isProd) {
     await mainWindow.loadURL('app://./music')
@@ -76,7 +76,6 @@ export function registerIpcFromManager(prefix: string, instance: object) {
   }
 }
 
-const sonosManager = new SonosGroupManager();
 registerIpcFromManager('sonos', sonosManager);
 
 
@@ -95,7 +94,7 @@ ipcMain.handle('clear-token', async () => {
 
 
 
-ipcMain.handle('auth-login', async (event, loginOptions?: {optimistic: boolean} )  => {
+ipcMain.handle('auth-login', async (event, loginOptions?: { optimistic: boolean }) => {
   await authManager.login(loginOptions);
   return authManager.getCurrentUser();
 });
@@ -108,4 +107,40 @@ ipcMain.handle('connect', async (event, groupName) => {
 ipcMain.handle('connectToServices', async (event) => {
   await sonosManager.ConnectToServices();
   return 'Connected';
+});
+
+
+ipcMain.handle('get-genre-info', async (_event, artistName: string, albumTitle: string) => {
+  const url = `https://api.getgenre.com/search?artist_name=${encodeURIComponent(artistName)}&album_name=${encodeURIComponent(albumTitle)}&timeout=60`;
+
+  const MAX_TIME = 60_000; // 60 seconds
+  const RETRY_DELAY = 1000; // 1 second
+
+  const fetchUntilExhausted = async (startTime: number): Promise<any> => {
+    const res = await fetch(url);
+    const text = await res.text();
+    const data = JSON.parse(text);
+
+    const exhausted =
+      data?.analysis?.exhausted ||
+      data?.album_artists?.[0]?.analysis?.exhausted;
+
+    const elapsed = Date.now() - startTime;
+
+    if (exhausted || elapsed >= MAX_TIME) {
+      return data;
+    }
+
+    console.log(`Genre info not ready — retrying (${Math.round(elapsed / 1000)}s)...`);
+    await new Promise((r) => setTimeout(r, RETRY_DELAY));
+    return fetchUntilExhausted(startTime);
+  };
+
+  try {
+    const result = await fetchUntilExhausted(Date.now());
+    return result;
+  } catch (err) {
+    console.error('Genre fetch failed:', err);
+    return { error: 'Genre fetch failed' };
+  }
 });

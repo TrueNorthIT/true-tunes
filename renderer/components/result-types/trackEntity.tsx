@@ -11,6 +11,11 @@ export interface ITrackEntity extends MediaItem {
         albumArtURI: string;
         artist: string;
         album: string;
+        trackNumber?: number;
+        duration?: number;
+    }
+    tags?: {
+        explicit?: boolean
     }
 }
 

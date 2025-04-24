@@ -31,6 +31,10 @@ export const ipcService = {
         });
     },
 
+    getGenreInfo: (artistName: string, albumName: string): Promise<any> => {
+        return window.ipc.invoke('get-genre-info', artistName, albumName);
+    }   
+
 };
 
 // ipcService.ts

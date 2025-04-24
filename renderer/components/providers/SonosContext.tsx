@@ -390,6 +390,7 @@ interface SonosActions {
     getQueue: () => Promise<Track[]>;
     reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
     addToQueue: (uri: string, index?: number) => Promise<void>;
+    getMetadata: (itemId: string) => Promise<MediaList>;
 }
 
 export type PlayerAPI = SonosActions & SonosStateType;
@@ -509,7 +510,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         addToQueue: async (uri: string, index?: number) => {
             await sonos.AddToQueue(uri, index);
             return Promise.resolve();
-        }
+        },
+
+        getMetadata: async (itemId: string) => {
+            const metadata = await sonos.GetMetadata(Services.Spotify, itemId);
+            return metadata;
+        },
 
     };
 
