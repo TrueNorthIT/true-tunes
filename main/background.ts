@@ -36,17 +36,17 @@ if (isProd) {
     {
       tooltip: 'Previous',
       icon: nativeImage.createFromPath(path.join(__dirname, 'images/prev.png')),
-      click() { sonosManager.Previous() }
+      click() { window.sonos.Previous() }
     },
     {
       tooltip: 'Play / Pause',
       icon: nativeImage.createFromPath(path.join(__dirname, 'images/play_pause.png')),
-      click() { sonosManager.TogglePlayback() }
+      click() { window.sonos.TogglePlayback() }
     },
     {
       tooltip: 'Next',
       icon: nativeImage.createFromPath(path.join(__dirname, 'images/next.png')),
-      click() { sonosManager.Next() }
+      click() { window.sonos.Next() }
     }
   ])
   
@@ -59,6 +59,26 @@ if (isProd) {
     mainWindow.webContents.openDevTools()
   }
 })()
+
+export function registerIpcFromManager(prefix: string, instance: object) {
+  const proto = Object.getPrototypeOf(instance);
+  const methodNames = Object.getOwnPropertyNames(proto)
+    .filter(name =>
+      typeof instance[name] === 'function' &&
+      name !== 'constructor' &&
+      !name.startsWith('ListenTo') // skip internal listener hooks
+    );
+
+  for (const method of methodNames) {
+    ipcMain.handle(`${prefix}:${method}`, async (_event, ...args) => {
+      return await instance[method](...args);
+    });
+  }
+}
+
+const sonosManager = new SonosGroupManager();
+registerIpcFromManager('sonos', sonosManager);
+
 
 app.on('window-all-closed', () => {
   app.quit()
@@ -81,101 +101,11 @@ ipcMain.handle('auth-login', async (event, loginOptions?: {optimistic: boolean} 
 });
 
 
-
-const sonosManager = new SonosGroupManager();
-
 ipcMain.handle('connect', async (event, groupName) => {
   await sonosManager.Connect(groupName);
   return 'Connected';
 });
-
-ipcMain.handle('search', async (event, searchTerm, searchType, service, resultCount) => {
-  const result = await sonosManager.Search(searchTerm, searchType, service, resultCount);
-  return result;
-});
- 
-ipcMain.handle('getQueue', async (event) => {
-  const result = await sonosManager.GetQueue();
-  return result;
-});
-
 ipcMain.handle('connectToServices', async (event) => {
   await sonosManager.ConnectToServices();
   return 'Connected';
-});
-
-ipcMain.handle('getConnectionStatus', async (event) => {
-  const result = await sonosManager.GetConnectionStatus();
-  return result;
-});
-
-ipcMain.handle('getMusicServiceRootPage', async (event, service) => {
-  const result = await sonosManager.GetRootPage(service);
-  return result;
-});
-
-ipcMain.handle('getMetadata', async (event, service, id) => {
-  const result = await sonosManager.GetMetadata(service, id);
-  return result;
-});
-
-ipcMain.handle('seek', async (event, time) => {
-  await sonosManager.SeekToPosition(time);
-  return 'Seeked';
-});
-
-ipcMain.handle('next', async (event) => {
-  await sonosManager.Next();
-  return 'Next';
-});
-
-ipcMain.handle('previous', async (event) => {
-  await sonosManager.Previous();
-  return 'Previous';
-});
-
-ipcMain.handle('togglePlayback', async (event) => {
-  await sonosManager.TogglePlayback();
-  return 'Toggled';
-});
-
-ipcMain.handle('getPlaybackState', async (event) => {
-  const result = await sonosManager.GetPlaybackState();
-  return result;
-});
-
-ipcMain.handle('getVolume', async (event) => {
-  const result = await sonosManager.GetVolume();
-  return result;
-});
-
-ipcMain.handle('setVolume', async (event, volume) => {
-  await sonosManager.SetVolume(volume);
-  return 'Volume set';
-});
-
-ipcMain.handle('jumpToPointInQueue', async (event, index) => {
-  await sonosManager.JumpToPointInQueue(index);
-  return 'Jumped';
-});
-
-ipcMain.handle('toggleMute', async (event) => {
-  await sonosManager.ToggleMute();
-  return 'Toggled';
-});
-
-ipcMain.handle('addToQueue', async (event, uri, index) => {
-  await sonosManager.AddToQueue(uri, index);
-  return 'Added';
-});
-
-ipcMain.handle('reorderTracksInQueue', async (event, startingIndex, numberOfTracks, insertBefore) => {
-  await sonosManager.ReorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
-  return 'Reordered';
-});
-
-
-ipcMain.handle('playSongNow', async (event, uri) => {
-  await sonosManager.PlaySongNow(uri);
-  return 'Playing';
 });

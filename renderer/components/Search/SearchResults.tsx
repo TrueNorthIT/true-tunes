@@ -56,53 +56,48 @@ const SearchResults: React.FC<SearchResultsProps> = ({
             <div className="mx-auto max-w-[2000px] mt-6 space-y-10 px-1 sm:px-2 md:px-4 pr-1  @container">
 
                 {/* Songs */}
-                {(searchType === SonosSearchTypes.All || searchType === SonosSearchTypes.Track) && (
-                    <section>
-                        <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">Songs</h2>
-                        <div className="grid grid-cols-2  @[1000px]:grid-cols-3 @[1300px]:grid-cols-4 gap-2">
-                            {trackResults.map((track) => (
-                                <TrackEntity
-                                    key={track.id}
-                                    entity={track}
-                                    small={false}
-                                    playing={false}
-                                    showImage={true}
-                                    isSearchResult={true}
-                                />
-                            ))}
-                        </div>
-                    </section>
-                )}
+                {searchType === SonosSearchTypes.All &&
+                    <>
+                        <section>
+                            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">Songs</h2>
+                            <div className="grid grid-cols-2  @[1000px]:grid-cols-3 @[1300px]:grid-cols-4 gap-2">
+                                {trackResults.map((track) => (
+                                    <TrackEntity
+                                        key={track.id}
+                                        entity={track}
+                                        small={false}
+                                        playing={false}
+                                        showImage={true}
+                                        isSearchResult={true}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                        <section className="relative">
+                            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">Artists</h2>
 
-                {/* Artists */}
-                {(searchType === SonosSearchTypes.All || searchType === SonosSearchTypes.Artist) && (
-                    <section className="relative">
-                        <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">Artists</h2>
+                            <div ref={artistRowRef} className="flex justify-evenly overflow-hidden p-2">
+                                {artistResults.slice(0, visibleArtistCount).map((artist) => (
+                                    <div
+                                        key={artist.id}
+                                        className="w-24 sm:w-28 md:w-32 flex-shrink-0"
+                                    >
+                                        <ArtistEntity entity={artist} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </>
 
-                        <div ref={artistRowRef} className="flex justify-evenly overflow-hidden p-2">
-                            {artistResults.slice(0, visibleArtistCount).map((artist) => (
-                                <div
-                                    key={artist.id}
-                                    className="w-24 sm:w-28 md:w-32 flex-shrink-0"
-                                >
-                                    <ArtistEntity entity={artist} />
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
+                }    <section>
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">Albums</h2>
+                    <div className="grid grid-cols-3 @[1000px]:grid-cols-4 @[1300px]:grid-cols-6 gap-4">
+                        {albumResults.map((album) => (
+                            <AlbumEntity key={album.id} entity={album} />
+                        ))}
+                    </div>
+                </section>
 
-                {/* Albums */}
-                {(searchType === SonosSearchTypes.All || searchType === SonosSearchTypes.Album) && (
-                    <section>
-                        <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">Albums</h2>
-                        <div className="grid grid-cols-3 @[1000px]:grid-cols-4 @[1300px]:grid-cols-6 gap-4">
-                            {albumResults.map((album) => (
-                                <AlbumEntity key={album.id} entity={album} />
-                            ))}
-                        </div>
-                    </section>
-                )}
             </div>
         </div>
     );

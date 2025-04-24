@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useMemo, useReducer, useEffect, useState } from 'react';
 import { BrowseResponse, Track } from '@svrooij/sonos/lib/models';
-import { ipcService } from './ipcService';
 import { SonosState } from '@svrooij/sonos/lib/models/sonos-state';
 import { MediaList } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import { SonosSearchTypes } from '../../enums/SonosSearchType';
 import { Services } from '../../enums/Services';
+import { ipcService, sonos } from './ipcService';
 
 interface SonosStateType {
     playbackState: {
@@ -366,6 +366,7 @@ function sonosReducer(state: SonosStateType, action: SonosAction): SonosStateTyp
     }
 }
 
+
 interface SonosActions {
     connect: (groupName: string) => Promise<string>;
     connectToServices: () => Promise<string>;
@@ -411,22 +412,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             return result;
         },
         seek: (time: string) => {
-            ipcService.seek(time);
+            sonos.SeekToPosition(time);
         },
         togglePlayback: () => {
-            ipcService.togglePlayback();
+            sonos.TogglePlayback();
         },
         toggleMute: () => {
-            ipcService.toggleMute();
+            sonos.ToggleMute();
         },
         next: () => {
-            ipcService.next();
+            sonos.Next();
         },
         previous: () => {
-            ipcService.previous();
+            sonos.Previous();
         },
         getPlaybackState: async () => {
-            const playbackState = await ipcService.getPlaybackState();
+            const playbackState = await sonos.GetPlaybackState();
             dispatch({ type: 'SET_PLAYBACK_STATE', payload: playbackState as SonosStateType['playbackState'] });
             const newRelTime = playbackState.positionInfo.RelTime;
             const newRelTimeInSeconds = convertRelTimeToSeconds(newRelTime);
@@ -434,28 +435,28 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             return playbackState;
         },
         getVolume: async () => {
-            const volume = await ipcService.getVolume();
+            const volume = await sonos.GetVolume();
             dispatch({ type: 'SET_VOLUME', payload: volume });
             return volume;
         },
         setVolume: (volume: number) => {
-            ipcService.setVolume(volume);
+            sonos.SetVolume(volume);
             dispatch({ type: 'SET_VOLUME', payload: volume });
         },
         jumpToPointInQueue: (index: number) => {
             // Queue is 0-indexed, so we need to add 1 to the index
-            ipcService.jumpToPointInQueue(index + 1);
+            sonos.JumpToPointInQueue(index + 1);
         },
         getQueue: async () => {
-            const queue = await ipcService.getQueue();
+            const queue = await sonos.GetQueue();
             if (typeof queue.Result === 'string') return;
             dispatch({ type: 'SET_QUEUE', payload: queue });
             return queue.Result;
         },
         getConnectionStatus: async () => {
-            const status = await ipcService.getConnectionStatus();
-            dispatch({ type: 'SET_CONNECTION_STATUS', payload: status });
-            return status;
+            const status = await sonos.GetConnectionStatus();
+            dispatch({ type: 'SET_CONNECTION_STATUS', payload: status !== null || status.length > 0 ? 'Connected' : 'Disconnected' });
+            return status !== null || status.length > 0 ? 'Connected' : 'Disconnected';
         },
         listenToTrackMetadata: () => {
             ipcService.listenToTrackMetadata(async (metadata: Track) => {
@@ -483,15 +484,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             });
         },
         search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => {
-            const result = await ipcService.search(searchTerm, searchType, service, resultCount);
+            const result = await sonos.Search(searchTerm, searchType, service, resultCount);
 
             return result;
         },
         fullFatSearch: async (searchTerm: string, service: Services) => {
         
-            let trackResult = await ipcService.search(searchTerm, SonosSearchTypes.Track, service, 12);
-            let albumResult = await ipcService.search(searchTerm, SonosSearchTypes.Album, service, 12);
-            let artistResult = await ipcService.search(searchTerm, SonosSearchTypes.Artist, service, 20);
+            let trackResult = await sonos.Search(searchTerm, SonosSearchTypes.Track, service, 12);
+            let albumResult = await sonos.Search(searchTerm, SonosSearchTypes.Album, service, 12);
+            let artistResult = await sonos.Search(searchTerm, SonosSearchTypes.Artist, service, 20);
             return {
                 track: trackResult,
                 album: albumResult,
@@ -500,13 +501,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     
         },
         playSongNow: (uri: string) => {
-            ipcService.playSongNow(uri);
+            sonos.PlaySongNow(uri);
         },
         reorderTracksInQueue: async (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
-            ipcService.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+            sonos.ReorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
         },
         addToQueue: async (uri: string, index?: number) => {
-            await ipcService.addToQueue(uri, index);
+            await sonos.AddToQueue(uri, index);
             return Promise.resolve();
         }
 

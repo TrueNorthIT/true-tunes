@@ -1,7 +1,7 @@
 import { BrowseResponse, Track } from "@svrooij/sonos/lib/models";
 import { SonosState } from "@svrooij/sonos/lib/models/sonos-state";
 import { MediaList } from "@svrooij/sonos/lib/musicservices/smapi-client";
-
+import  { SonosGroupManager }  from "../../../main/SonosGroupManager";
 
 export const ipcService = {
     connect: (groupName: string): Promise<string> => {
@@ -9,36 +9,6 @@ export const ipcService = {
     },
     connectToServices: (): Promise<string> => {
         return window.ipc.invoke('connectToServices');
-    },
-    togglePlayback: (): void => {
-        window.ipc.invoke('togglePlayback');
-    },
-    toggleMute: (): void => {
-        window.ipc.invoke('toggleMute');
-    },
-    seek: (time: string) => {
-        window.ipc.invoke('seek', time);
-    },
-    next: (): void => {        
-        window.ipc.invoke('next');
-    },
-    previous: (): void => {
-        window.ipc.invoke('previous');
-    },
-    getPlaybackState: (): Promise<SonosState> => {
-        return window.ipc.invoke<SonosState>('getPlaybackState');
-    },
-    getVolume: (): Promise<number> => {
-        return window.ipc.invoke<number>('getVolume');
-    },
-    setVolume: (volume: number): void => {
-        window.ipc.invoke('setVolume', volume);
-    },
-    jumpToPointInQueue: (index: number): void => {
-        window.ipc.invoke('jumpToPointInQueue', index);
-    },
-    getConnectionStatus: (): Promise<string> => {
-        return window.ipc.invoke<string>('getConnectionStatus');
     },
     listenToTrackMetadata: (callback: (metadata: Track) => void): void => {
         window.ipc.on('trackMetadata', (metadata) => {
@@ -60,21 +30,14 @@ export const ipcService = {
             callback();
         });
     },
-    search: (searchTerm: string, searchType: string, service: number, resultCount: number): Promise<MediaList> => {
-        return window.ipc.invoke<MediaList>('search', searchTerm, searchType, service, resultCount);
-    },
-    playSongNow: (uri: string): void => {
-        window.ipc.invoke('playSongNow', uri);
-    },
-    getQueue: (): Promise<BrowseResponse> => {
-        return window.ipc.invoke<BrowseResponse>('getQueue');
-    },  
-    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
-        window.ipc.invoke('reorderTracksInQueue', startingIndex, numberOfTracks, insertBefore);
-    },
-    addToQueue: (uri: string, index?: number) => {
-        return window.ipc.invoke('addToQueue', uri, index);
-    }
-    
 
 };
+
+// ipcService.ts
+
+// assumes `window.ipc` is now exposed by contextBridge
+export const sonos: SonosGroupManager = new Proxy({}, {
+  get(_, method: string) {
+    return (...args: any[]) => window.ipc.invoke(`sonos:${method}`, ...args);
+  }
+}) as SonosGroupManager;

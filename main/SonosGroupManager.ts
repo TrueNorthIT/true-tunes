@@ -2,12 +2,14 @@ import { SonosDevice, SonosEvents, SonosManager } from '@svrooij/sonos'
 import { ipcMain, shell, webContents } from 'electron';
 import { mainWindow } from './background';
 import { Track } from '@svrooij/sonos/lib/models';
+import { Services } from '../renderer/enums/Services';
+import ISonosGroupManager from './ISonosGroupManager';
 
 enum SonosService {
     Spotify = 9
 }
 
-class SonosGroupManager {
+class SonosGroupManager implements ISonosGroupManager {
 
     private manager: SonosManager;
     private coordinator: SonosDevice | undefined;
@@ -16,25 +18,25 @@ class SonosGroupManager {
         this.manager = new SonosManager();
     }
 
-    private ListenToTrackMetadata() {
+    public ListenToTrackMetadata() {
         this.coordinator.Events.on(SonosEvents.CurrentTrackMetadata, (data: Track) => {
             mainWindow.webContents.send('trackMetadata', data);
         })
     }
 
-    private ListenToVolumeChange() {
+    public ListenToVolumeChange() {
         this.coordinator.Events.on(SonosEvents.Volume, (data: number) => {
             mainWindow.webContents.send('volume', data);
         })
     }
 
-    private ListenToPlayPause() {
+    public ListenToPlayPause() {
         this.coordinator.Events.on(SonosEvents.PlaybackStopped, () => {
             mainWindow.webContents.send('playbackState');
         })
     }
 
-    private ListenToMute() {
+    public ListenToMute() {
         this.coordinator.Events.on(SonosEvents.Mute, (data: boolean) => {
             mainWindow.webContents.send('mute', data);
         })
@@ -69,7 +71,7 @@ class SonosGroupManager {
         this.ListenToMute();
     }
 
-    public async Search(term: string, searchType: string, service: SonosService, resultCount: number) {
+    public async Search(term: string, searchType: string, service: Services, resultCount: number) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
             try{
@@ -95,7 +97,7 @@ class SonosGroupManager {
         }
     }
 
-    public async GetRootPage(service: SonosService) {
+    public async GetRootPage(service: Services) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
             const result = await musicService.GetMetadata({ id: 'root', index: 0, count: 15, recursive: true });
@@ -103,7 +105,7 @@ class SonosGroupManager {
         }
     }
 
-    public async GetMetadata(service: SonosService, id: string) {
+    public async GetMetadata(service: Services, id: string) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
             const result = await musicService.GetMetadata({ id, index: 0, count: 15, recursive: true });
