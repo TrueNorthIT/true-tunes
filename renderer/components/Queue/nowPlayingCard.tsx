@@ -21,11 +21,11 @@ export default function NowPlayingCard() {
 
     useEffect(() => {
         if (queue.queue.length > 0) {
-            const currentTrack = queue.queue[queue.currentTrackIndex];
-            setAlbumArtUri(currentTrack.AlbumArtUri || truenorth_logo);
-            setAlbumName(currentTrack.Album || "Unknown Album");
-            setArtistName(currentTrack.Artist || "Unknown Artist");
-            setTrackName(currentTrack.Title || "Unknown Track");
+            const currentTrack = queue.queue[queue.currentTrackIndex-1];
+            setAlbumArtUri(currentTrack?.AlbumArtUri || truenorth_logo);
+            setAlbumName(currentTrack?.Album || "Unknown Album");
+            setArtistName(currentTrack?.Artist || "Unknown Artist");
+            setTrackName(currentTrack?.Title || "Unknown Track");
         } else {
             setAlbumArtUri(truenorth_logo);
             setAlbumName("TrueNorth Radio");

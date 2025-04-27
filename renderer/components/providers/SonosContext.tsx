@@ -42,7 +42,7 @@ interface SonosActions {
     listenToMuteEvent: () => void;
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
-    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => Promise<MediaList>;
+    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number, skip?: number) => Promise<MediaList>;
     fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult>;
     playSongNow: (uri: string) => void;
     getQueue: () => Promise<Track[]>;
@@ -50,6 +50,7 @@ interface SonosActions {
     addToQueue: (uri: string, index?: number) => Promise<void>;
     playNext: (uri: string) => Promise<void>;
     getMetadata: (itemId: string) => Promise<MediaList>;
+    getItemMetadata: (itemId: string) => Promise<MediaList>;
     removeFromQueue: (index: number) => void;
     removeRangeFromQueue: (index: number, count: number) => void;
 }
@@ -284,8 +285,8 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
                 await refreshPlaybackState();
             });
         },
-        search: async (term, type, service, count) => {
-            return await sonos.Search(term, type, service, count);
+        search: async (term, type, service, count, skip = 0) => {
+            return await sonos.Search(term, type, service, count, skip);
         },
         fullFatSearch: async (term, service) => {
             return {
@@ -302,6 +303,7 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
             await sonos.AddToQueue(uri, playbackState.positionInfo.Track + 1);
         },
         getMetadata: async (itemId) => { return await sonos.GetMetadata(Services.Spotify, itemId); },
+        getItemMetadata: async (itemId) => { return await sonos.GetItemMetadata(Services.Spotify, itemId); },
         removeFromQueue: (index) => { sonos.RemoveTrackRangeFromQueue(index, 1); },
         removeRangeFromQueue: (index, count) => { sonos.RemoveTrackRangeFromQueue(index, count); }
     };

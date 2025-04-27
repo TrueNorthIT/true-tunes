@@ -76,11 +76,11 @@ class SonosGroupManager {
         this.ListenToMute();
     }
 
-    public async Search(term: string, searchType: string, service: Services, resultCount: number) {
+    public async Search(term: string, searchType: string, service: Services, resultCount: number, skip: number = 0) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
             try{
-                const result = await musicService.Search({ id: searchType, term, index: 0, count: resultCount });
+                const result = await musicService.Search({ id: searchType, term, index: skip, count: resultCount });
                 return result;
             }catch(e) {
                 console.log(e);
@@ -110,6 +110,14 @@ class SonosGroupManager {
         }
     }
 
+    public async GetItemMetadata(service: Services, id: string) {
+        if (this.coordinator) {
+            const musicService = await this.coordinator.MusicServicesClient(service);
+            const result = await musicService.GetExtendedMetadata({ id});
+            return result;
+        }
+    }
+
     public async GetMetadata(service: Services, id: string) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
@@ -117,7 +125,6 @@ class SonosGroupManager {
             return result;
         }
     }
-
     public async TogglePlayback() {
         if (this.coordinator) {
             await this.coordinator.TogglePlayback();

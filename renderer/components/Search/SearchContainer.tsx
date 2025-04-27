@@ -18,7 +18,7 @@ const SearchContainer = ({ children }: { children: ReactNode }) => {
 
             <SearchBar onSearchResults={console.table} />
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-1 pb-6 space-y-8 mb-16 mt-4">
+            <div id="scroll-container" className="flex-1 min-h-0 overflow-y-auto px-1 pr-4 pb-6 space-y-8 mb-16 mt-4 slick-scrollbar">
                 {children}
             </div>
         </main>
