@@ -7,31 +7,9 @@ import { Services } from '../../enums/Services';
 import { ipcService, sonos } from './ipcService';
 
 interface SonosStateType {
-    playbackState: {
-        mediaInfo: {
-            NrTracks: number;
-            MediaDuration: string;
-            CurrentURI: string;
-            PlayMedium: string;
-            RecordMedium: string;
-            WriteStatus: string;
-        };
-        muted: boolean;
-        positionInfo: {
-            Track: number;
-            TrackDuration: string;
-            TrackMetaData: Track;
-            TrackURI: string;
-            RelTime: string;
-            AbsTime: string;
-            RelCount: number;
-            AbsCount: number;
-        };
-        transportState: string;
-        volume: number;
-    } | null;
+    playbackState?: Partial<SonosState>;
     connectionStatus: string;
-    queue: Track[]; // Add queue state
+    queue: Track[];
 }
 
 interface fullFatSearchResult {
@@ -40,335 +18,15 @@ interface fullFatSearchResult {
     artist: MediaList;
 }
 
-const initialState: SonosStateType = {
-    "playbackState": {
-        "mediaInfo": {
-            "NrTracks": 20,
-            "MediaDuration": "NOT_IMPLEMENTED",
-            "CurrentURI": "x-rincon-queue:RINCON_000E588DE3D801400#0",
-            "PlayMedium": "NETWORK",
-            "RecordMedium": "NOT_IMPLEMENTED",
-            "WriteStatus": "NOT_IMPLEMENTED"
-        },
-        "muted": false,
-        "positionInfo": {
-            "Track": 1,
-            "TrackDuration": "0:04:36",
-            "TrackMetaData": {
-                "Album": "Moon Music (Full Moon Edition)",
-                "Artist": "Coldplay, Jon Hopkins",
-                "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-                "Title": "MOON MUSiC",
-                "UpnpClass": "object.item.audioItem.musicTrack",
-                "Duration": "0:04:36",
-                "ItemId": "-1",
-                "ParentId": "-1",
-                "TrackUri": "x-sonos-http:track/391126375.flac?sid=174&flags=24608&sn=7",
-                "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-            },
-            "TrackURI": "x-sonos-http:track/391126375.flac?sid=174&flags=24608&sn=7",
-            "RelTime": "0:00:38",
-            "AbsTime": "NOT_IMPLEMENTED",
-            "RelCount": 2147483647,
-            "AbsCount": 2147483647
-        },
-        "transportState": "STOPPED",
-        "volume": 11
-    },
-    "connectionStatus": "Connected",
-    "queue": [
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay, Jon Hopkins",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "MOON MUSiC",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:04:36",
-            "ItemId": "Q:0/1",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126375.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "feelslikeimfallinginlove",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:56",
-            "ItemId": "Q:0/2",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126377.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay, Little Simz, Burna Boy, Elyanna, Tini",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "WE PRAY",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:53",
-            "ItemId": "Q:0/3",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126379.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "JUPiTER",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:04:01",
-            "ItemId": "Q:0/4",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126381.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay, Ayra Starr",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "GOOD FEELiNGS",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:37",
-            "ItemId": "Q:0/5",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126382.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "🌈",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:06:10",
-            "ItemId": "Q:0/6",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126384.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "iAAM",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:03",
-            "ItemId": "Q:0/7",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126385.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "AETERNA",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:04:13",
-            "ItemId": "Q:0/8",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126386.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "ALL MY LOVE",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:43",
-            "ItemId": "Q:0/9",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126388.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "ONE WORLD",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:06:48",
-            "ItemId": "Q:0/10",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126389.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "Moon Music (Elodie)",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:02:46",
-            "ItemId": "Q:0/11",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126391.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "feelslikeimfallinginlive",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:04:36",
-            "ItemId": "Q:0/12",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126392.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "The Karate Kid",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:02:55",
-            "ItemId": "Q:0/13",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126395.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay, Little Simz, Burna Boy, Elyanna, Tini",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "We Pray (Be Our Guest)",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:53",
-            "ItemId": "Q:0/14",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126396.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "Angelsong",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:04:22",
-            "ItemId": "Q:0/15",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126397.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "Jupiter (Single Version)",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:02:53",
-            "ItemId": "Q:0/16",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126399.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "Man in The Moon",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:55",
-            "ItemId": "Q:0/17",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126405.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "i Am A Mountain",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:03:07",
-            "ItemId": "Q:0/18",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126410.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "All My Love (Live in Dublin)",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:04:06",
-            "ItemId": "Q:0/19",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126413.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        },
-        {
-            "Album": "Moon Music (Full Moon Edition)",
-            "Artist": "Coldplay",
-            "AlbumArtUri": "https://i.scdn.co/image/ab67616d00001e02ed4cd21086be1931a5b9d2c9",
-            "Title": "👋",
-            "UpnpClass": "object.item.audioItem.musicTrack",
-            "Duration": "0:02:33",
-            "ItemId": "Q:0/20",
-            "ParentId": "Q:0",
-            "TrackUri": "x-sonos-http:track/391126417.flac?sid=174&flags=24608&sn=7",
-            "ProtocolInfo": "sonos.com-http:*:audio/flac:*"
-        }
-    ]
-}
-
 type SonosAction =
     | { type: 'SET_PLAYBACK_STATE'; payload: SonosStateType['playbackState'] }
     | { type: 'SET_CONNECTION_STATUS'; payload: string }
     | { type: 'SET_VOLUME'; payload: number }
     | { type: 'UPDATE_REL_TIME'; payload: string }
-    | { type: 'SET_QUEUE'; payload: BrowseResponse }; // New action for queue
-
-function sonosReducer(state: SonosStateType, action: SonosAction): SonosStateType {
-    switch (action.type) {
-        case 'SET_PLAYBACK_STATE':
-            return { ...state, playbackState: action.payload };
-        case 'SET_CONNECTION_STATUS':
-            return { ...state, connectionStatus: action.payload };
-        case 'SET_VOLUME':
-            if (state.playbackState) {
-                return {
-                    ...state,
-                    playbackState: {
-                        ...state.playbackState,
-                        volume: action.payload,
-                    },
-                };
-            }
-            return state;
-        case 'UPDATE_REL_TIME':
-            if (state.playbackState) {
-                return {
-                    ...state,
-                    playbackState: {
-                        ...state.playbackState,
-                        positionInfo: {
-                            ...state.playbackState.positionInfo,
-                            RelTime: action.payload,
-                        },
-                    },
-                };
-            }
-            return state;
-        case 'SET_QUEUE':
-            if (typeof action.payload.Result === 'string') return;
-            return { ...state, queue: action.payload.Result };
-        default:
-            return state;
-    }
-}
-
+    | { type: 'SET_QUEUE'; payload: BrowseResponse };
 
 interface SonosActions {
-    connect: (groupName: string) => Promise<string>;
+    connect: (groupName?: string) => Promise<string>;
     connectToServices: () => Promise<string>;
     togglePlayback: () => void;
     toggleMute: () => void;
@@ -390,20 +48,179 @@ interface SonosActions {
     getQueue: () => Promise<Track[]>;
     reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
     addToQueue: (uri: string, index?: number) => Promise<void>;
+    playNext: (uri: string) => Promise<void>;
     getMetadata: (itemId: string) => Promise<MediaList>;
+    removeFromQueue: (index: number) => void;
+    removeRangeFromQueue: (index: number, count: number) => void;
 }
 
-export type PlayerAPI = SonosActions & SonosStateType;
+const initialState: SonosStateType = {
+    playbackState: null,
+    connectionStatus: 'Disconnected',
+    queue: []
+};
 
-const AudioPlayerContext = createContext<PlayerAPI | undefined>(undefined);
+function sonosReducer(state: SonosStateType, action: SonosAction): SonosStateType {
+    switch (action.type) {
+        case 'SET_PLAYBACK_STATE':
+            return { ...state, playbackState: action.payload };
+        case 'SET_CONNECTION_STATUS':
+            return { ...state, connectionStatus: action.payload };
+        case 'SET_VOLUME':
+            return state.playbackState
+                ? { ...state, playbackState: { ...state.playbackState, volume: action.payload } }
+                : state;
+        case 'UPDATE_REL_TIME':
+            return state.playbackState
+                ? {
+                    ...state,
+                    playbackState: {
+                        ...state.playbackState,
+                        positionInfo: {
+                            ...state.playbackState.positionInfo,
+                            RelTime: action.payload,
+                        },
+                    },
+                }
+                : state;
+        case 'SET_QUEUE':
+            return typeof action.payload.Result === 'string' ? state : { ...state, queue: action.payload.Result };
+        default:
+            return state;
+    }
+}
+
+interface SonosQueue {
+    queue: Track[];
+    currentTrackIndex: number;
+}
+
+const SonosQueueContext = createContext<SonosQueue | undefined>(undefined);
+const SonosStateContext = createContext<SonosStateType | undefined>(undefined);
+const SonosActionsContext = createContext<SonosActions | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(sonosReducer, initialState);
     const [optimisticRelTime, setOptimisticRelTime] = useState<number | null>(null);
 
-    const actions: SonosActions = {
-        connect: async (groupName: string) => {
-            const result = await ipcService.connect(groupName);
+    const actions: SonosActions = useMemo(() => createActions(dispatch, setOptimisticRelTime), [dispatch]);
+
+    const queue = useMemo(() => state.queue, [state.queue]);
+    const currentTrackIndex = useMemo(() => {
+        if (state.playbackState?.positionInfo) {
+            return state.playbackState.positionInfo.Track ;
+        }
+        return 0;
+    }, [state.playbackState?.positionInfo]);
+
+
+    const sonosQueueState = useMemo(() => ({ queue, currentTrackIndex }), [queue, currentTrackIndex]);
+
+    useEffect(() => {
+        const fetchInitialState = async () => {
+            try {
+                await actions.getPlaybackState();
+                await actions.getQueue();
+            } catch (error) {
+                console.error('Error fetching initial state:', error);
+            }
+        };
+
+        actions.connect().then(async () => {
+            await actions.connectToServices();
+            fetchInitialState();
+            actions.listenToTrackMetadata();
+            actions.listenToMuteEvent();
+            actions.listenToVolumeEvent();
+            actions.listenToPlayPauseEvent();
+        });
+    }, [actions]);
+
+    useEffect(() => {
+        if (state.playbackState?.transportState === 'PLAYING' && optimisticRelTime !== null) {
+            const interval = setInterval(() => {
+                setOptimisticRelTime((prev) => (prev !== null ? prev + 1 : prev));
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [state.playbackState?.transportState, optimisticRelTime]);
+
+    useEffect(() => {
+        if (state.playbackState?.transportState === 'PLAYING') {
+            const syncInterval = setInterval(async () => {
+                const playbackState = await actions.getPlaybackState();
+                const newRelTimeInSeconds = convertRelTimeToSeconds(playbackState.positionInfo.RelTime);
+                setOptimisticRelTime(newRelTimeInSeconds);
+            }, 5000);
+            return () => clearInterval(syncInterval);
+        }
+    }, [state.playbackState?.transportState, actions]);
+
+    useEffect(() => {
+        document.title =
+            `TrueTunes : ${state.playbackState?.positionInfo.TrackMetaData.Title} - ${state.playbackState?.positionInfo.TrackMetaData.Artist}` ||
+            'TrueTunes';
+    }, [state.playbackState?.mediaInfo]);
+
+    useEffect(() => {
+        if (optimisticRelTime !== null && state.playbackState) {
+            const relTimeString = convertSecondsToRelTime(optimisticRelTime);
+            dispatch({ type: 'UPDATE_REL_TIME', payload: relTimeString });
+        }
+    }, [optimisticRelTime]);
+
+    return (
+        <SonosStateContext.Provider value={state}>
+            <SonosActionsContext.Provider value={actions}>
+                <SonosQueueContext.Provider value={sonosQueueState}>
+                    {children}
+                </SonosQueueContext.Provider>
+            </SonosActionsContext.Provider>
+        </SonosStateContext.Provider>
+    );
+}
+
+export function useSonosQueue() {
+    const context = useContext(SonosQueueContext);
+    if (!context) throw new Error('useSonosQueue must be used within an AudioProvider');
+    return context;
+}
+
+export function useSonosState() {
+    const context = useContext(SonosStateContext);
+    if (!context) throw new Error('useSonosState must be used within an AudioProvider');
+    return context;
+}
+
+export function useSonosActions() {
+    const context = useContext(SonosActionsContext);
+    if (!context) throw new Error('useSonosActions must be used within an AudioProvider');
+    return context;
+}
+
+function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTime: React.Dispatch<React.SetStateAction<number | null>>): SonosActions {
+    async function refreshPlaybackStateAndQueue() {
+        const playbackState = await sonos.GetPlaybackState();
+        dispatch({ type: 'SET_PLAYBACK_STATE', payload: playbackState });
+        const newRelTimeInSeconds = convertRelTimeToSeconds(playbackState.positionInfo.RelTime);
+        setOptimisticRelTime(newRelTimeInSeconds);
+
+        const queue = await sonos.GetQueue();
+        if (typeof queue.Result !== 'string') {
+            dispatch({ type: 'SET_QUEUE', payload: queue });
+        }
+    }
+
+    async function refreshPlaybackState() {
+        const playbackState = await sonos.GetPlaybackState();
+        dispatch({ type: 'SET_PLAYBACK_STATE', payload: playbackState });
+        const newRelTimeInSeconds = convertRelTimeToSeconds(playbackState.positionInfo.RelTime);
+        setOptimisticRelTime(newRelTimeInSeconds);
+    }
+
+    return {
+        connect: async (groupName) => {
+            const result = await ipcService.connect(groupName || '');
             dispatch({ type: 'SET_CONNECTION_STATUS', payload: result });
             return result;
         },
@@ -412,27 +229,16 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             dispatch({ type: 'SET_CONNECTION_STATUS', payload: result });
             return result;
         },
-        seek: (time: string) => {
-            sonos.SeekToPosition(time);
-        },
-        togglePlayback: () => {
-            sonos.TogglePlayback();
-        },
-        toggleMute: () => {
-            sonos.ToggleMute();
-        },
-        next: () => {
-            sonos.Next();
-        },
-        previous: () => {
-            sonos.Previous();
-        },
+        seek: (time) => { sonos.SeekToPosition(time); },
+        togglePlayback: () => { sonos.TogglePlayback(); },
+        toggleMute: () => { sonos.ToggleMute(); },
+        next: () => { sonos.Next(); },
+        previous: () => { sonos.Previous(); },
         getPlaybackState: async () => {
             const playbackState = await sonos.GetPlaybackState();
-            dispatch({ type: 'SET_PLAYBACK_STATE', payload: playbackState as SonosStateType['playbackState'] });
-            const newRelTime = playbackState.positionInfo.RelTime;
-            const newRelTimeInSeconds = convertRelTimeToSeconds(newRelTime);
-            setOptimisticRelTime(newRelTimeInSeconds); // Reset optimisticRelTime on full state refresh
+            dispatch({ type: 'SET_PLAYBACK_STATE', payload: playbackState });
+            const newRelTimeInSeconds = convertRelTimeToSeconds(playbackState.positionInfo.RelTime);
+            setOptimisticRelTime(newRelTimeInSeconds);
             return playbackState;
         },
         getVolume: async () => {
@@ -440,165 +246,74 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             dispatch({ type: 'SET_VOLUME', payload: volume });
             return volume;
         },
-        setVolume: (volume: number) => {
+        setVolume: (volume) => {
             sonos.SetVolume(volume);
             dispatch({ type: 'SET_VOLUME', payload: volume });
         },
-        jumpToPointInQueue: (index: number) => {
-            // Queue is 0-indexed, so we need to add 1 to the index
-            sonos.JumpToPointInQueue(index + 1);
-        },
+        jumpToPointInQueue: (index) => { sonos.JumpToPointInQueue(index + 1); },
         getQueue: async () => {
             const queue = await sonos.GetQueue();
-            if (typeof queue.Result === 'string') return;
-            dispatch({ type: 'SET_QUEUE', payload: queue });
-            return queue.Result;
+            if (typeof queue.Result !== 'string') {
+                dispatch({ type: 'SET_QUEUE', payload: queue });
+                return queue.Result;
+            }
+            return [];
         },
         getConnectionStatus: async () => {
             const status = await sonos.GetConnectionStatus();
-            dispatch({ type: 'SET_CONNECTION_STATUS', payload: status !== null || status.length > 0 ? 'Connected' : 'Disconnected' });
-            return status !== null || status.length > 0 ? 'Connected' : 'Disconnected';
+            dispatch({ type: 'SET_CONNECTION_STATUS', payload: status !== null && status.length > 0 ? 'Connected' : 'Disconnected' });
+            return status !== null && status.length > 0 ? 'Connected' : 'Disconnected';
         },
         listenToTrackMetadata: () => {
-            ipcService.listenToTrackMetadata(async (metadata: Track) => {
-                console.log('Track metadata received:', metadata);
-                actions.getPlaybackState();
-                await actions.getQueue(); // Fetch queue on metadata change
+            ipcService.listenToTrackMetadata(async () => {
+                await refreshPlaybackStateAndQueue();
             });
         },
         listenToMuteEvent: () => {
-            ipcService.listenToMuteEvent((mute) => {
-                console.log('Mute event received:', mute);
-                actions.getPlaybackState();
+            ipcService.listenToMuteEvent(async () => {
+                await refreshPlaybackState();
             });
         },
         listenToVolumeEvent: () => {
-            ipcService.listenToVolumeEvent((volume) => {
-                console.log('Volume event received:', volume);
-                actions.getPlaybackState();
+            ipcService.listenToVolumeEvent(async () => {
+                await refreshPlaybackState();
             });
         },
         listenToPlayPauseEvent: () => {
-            ipcService.listenToPlayPauseEvent(() => {
-                console.log('Play/Pause event received');
-                actions.getPlaybackState();
+            ipcService.listenToPlayPauseEvent(async () => {
+                await refreshPlaybackState();
             });
         },
-        search: async (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number) => {
-            const result = await sonos.Search(searchTerm, searchType, service, resultCount);
-
-            return result;
+        search: async (term, type, service, count) => {
+            return await sonos.Search(term, type, service, count);
         },
-        fullFatSearch: async (searchTerm: string, service: Services) => {
-        
-            let trackResult = await sonos.Search(searchTerm, SonosSearchTypes.Track, service, 12);
-            let albumResult = await sonos.Search(searchTerm, SonosSearchTypes.Album, service, 12);
-            let artistResult = await sonos.Search(searchTerm, SonosSearchTypes.Artist, service, 20);
+        fullFatSearch: async (term, service) => {
             return {
-                track: trackResult,
-                album: albumResult,
-                artist: artistResult
-            }
-    
+                track: await sonos.Search(term, SonosSearchTypes.Track, service, 12),
+                album: await sonos.Search(term, SonosSearchTypes.Album, service, 12),
+                artist: await sonos.Search(term, SonosSearchTypes.Artist, service, 20)
+            };
         },
-        playSongNow: (uri: string) => {
-            sonos.PlaySongNow(uri);
+        playSongNow: (uri) => { sonos.PlaySongNow(uri); },
+        reorderTracksInQueue: (start, count, insertBefore) => { sonos.ReorderTracksInQueue(start, count, insertBefore); },
+        addToQueue: async (uri, index) => { await sonos.AddToQueue(uri, index); },
+        playNext: async (uri) => {
+            const playbackState = await sonos.GetPlaybackState();
+            await sonos.AddToQueue(uri, playbackState.positionInfo.Track + 1);
         },
-        reorderTracksInQueue: async (startingIndex: number, numberOfTracks: number, insertBefore: number) => {
-            sonos.ReorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
-        },
-        addToQueue: async (uri: string, index?: number) => {
-            await sonos.AddToQueue(uri, index);
-            return Promise.resolve();
-        },
-
-        getMetadata: async (itemId: string) => {
-            const metadata = await sonos.GetMetadata(Services.Spotify, itemId);
-            return metadata;
-        },
-
+        getMetadata: async (itemId) => { return await sonos.GetMetadata(Services.Spotify, itemId); },
+        removeFromQueue: (index) => { sonos.RemoveTrackRangeFromQueue(index, 1); },
+        removeRangeFromQueue: (index, count) => { sonos.RemoveTrackRangeFromQueue(index, count); }
     };
-
-    useEffect(() => {
-        const fetchInitialState = async () => {
-            try {
-                const playbackState = await actions.getPlaybackState();
-                await actions.getQueue(); // Fetch queue on mount
-                console.log('Initial playback state and queue fetched:', playbackState);
-            } catch (error) {
-                console.error('Error fetching initial state:', error);
-            }
-        };
-
-        actions.connect('Office + 1').then(() => {
-            fetchInitialState();
-            actions.listenToTrackMetadata();
-            actions.listenToMuteEvent();
-            actions.listenToVolumeEvent();
-            actions.listenToPlayPauseEvent();
-        });
-    }, []); // Empty dependency array ensures this runs only once when the component mounts
-
-    // Effect for updating optimistic RelTime every second
-    useEffect(() => {
-        if (state.playbackState?.transportState === 'PLAYING' && optimisticRelTime !== null) {
-            const interval = setInterval(() => {
-                setOptimisticRelTime((prev) => (prev !== null ? prev + 1 : prev));
-            }, 1000);
-
-            return () => clearInterval(interval);
-        }
-    }, [state.playbackState?.transportState, optimisticRelTime]);
-
-    // Effect for syncing RelTime with Sonos every 5 seconds
-    useEffect(() => {
-        if (state.playbackState?.transportState === 'PLAYING') {
-            const syncInterval = setInterval(async () => {
-                const state = await actions.getPlaybackState();
-                const newRelTime = state.positionInfo.RelTime;
-                const newRelTimeInSeconds = convertRelTimeToSeconds(newRelTime);
-                setOptimisticRelTime(newRelTimeInSeconds);
-            }, 5000);
-
-            return () => clearInterval(syncInterval);
-        }
-    }, [state.playbackState?.transportState]);
-
-    // Update the document title with the current track info
-    useEffect(() => {
-        document.title =
-            `TrueTunes : ${state.playbackState?.positionInfo.TrackMetaData.Title} - ${state.playbackState?.positionInfo.TrackMetaData.Artist} ` ||
-            'TrueTunes';
-    }, [state.playbackState?.mediaInfo]);
-
-    // Function to convert RelTime (string format like "0:02:19") to seconds
-    function convertRelTimeToSeconds(relTime: string): number {
-        const parts = relTime.split(':').map(Number);
-        return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    }
-
-    function convertSecondsToRelTime(seconds: number): string {
-        const date = new Date(seconds * 1000);
-        return date.toISOString().substr(12, 7);
-    }
-
-    // Update the `RelTime` in the state whenever `optimisticRelTime` changes
-    useEffect(() => {
-        if (optimisticRelTime !== null && state.playbackState) {
-            const relTimeString = convertSecondsToRelTime(optimisticRelTime);
-            dispatch({ type: 'UPDATE_REL_TIME', payload: relTimeString });
-        }
-    }, [optimisticRelTime]);
-
-    const value = useMemo(() => ({ ...state, ...actions }), [state]);
-
-    return <AudioPlayerContext.Provider value={value}>{children}</AudioPlayerContext.Provider>;
 }
 
-export function useSonosContext() {
-    const context = useContext(AudioPlayerContext);
-    if (!context) {
-        throw new Error('useSonosContext must be used within an AudioProvider');
-    }
-    return context;
+
+function convertRelTimeToSeconds(relTime: string): number {
+    const parts = relTime.split(':').map(Number);
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+}
+
+function convertSecondsToRelTime(seconds: number): string {
+    const date = new Date(seconds * 1000);
+    return date.toISOString().substr(12, 7);
 }

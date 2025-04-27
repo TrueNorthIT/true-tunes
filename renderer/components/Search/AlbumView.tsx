@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { IAlbumEntity } from '@components/result-types/albumEntity';
 import { ITrackEntity } from '@components/result-types/trackEntity';
-import { useSonosContext } from '@providers/SonosContext';
+import { useSonosActions, } from '@providers/SonosContext';
 import { ipcService } from '@components/providers/ipcService';
 import { IArtistEntity } from '@components/result-types/artistEntity';
 import { Services } from '@enums/Services';
 import { SonosSearchTypes } from '@enums/SonosSearchType';
 import { on } from 'events';
+import Image from 'next/image';
+import ImageWithFallback from '@components/ImageWithFallback';
 
 interface AlbumViewProps {
     album: IAlbumEntity;
@@ -20,7 +22,7 @@ const formatDuration = (seconds: number) => {
 };
 
 const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
-    const player = useSonosContext();
+    const player = useSonosActions();
     const [tracks, setTracks] = useState<ITrackEntity[]>([]);
     const [loading, setLoading] = useState(true);
     const [genres, setGenres] = useState<string[] | null>(null);
@@ -70,7 +72,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
             )}
 
             <div className="flex items-start gap-6">
-                <img src={album.albumArtURI} alt={album.title} className="w-32 h-32 object-cover rounded-lg" />
+                <ImageWithFallback src={album.albumArtURI} alt={album.title} className="w-32 h-32 object-cover rounded-lg" />
                 <div>
                     <h1 className="text-2xl font-bold text-white">{album.title}</h1>
                     <p className="text-gray-400 hover:underline" onClick={() => openArtist(album.artist, album.artistId)} >{album.artist}</p>
@@ -111,7 +113,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
                     className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 text-sm font-medium"
                     onClick={async () => {
                         for (let i = 0; i < tracks.length; i++) {
-                            await player.addToQueue(tracks[i].id, player.playbackState.positionInfo.Track + 1 + i);
+                            await player.playNext(tracks[i].id);
                         }
                     }}
                 >

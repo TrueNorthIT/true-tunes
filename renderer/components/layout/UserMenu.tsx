@@ -2,6 +2,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../providers/authProvider'; // Import the Auth context
 import Image from 'next/image';
+import ImageWithFallback from '@components/ImageWithFallback';
 
 const UserMenu: React.FC = () => {
     const { userDetails, login, logout } = useAuth(); // Access login, logout, and account from the Auth context
@@ -18,7 +19,7 @@ const UserMenu: React.FC = () => {
                     <MenuButton className="-m-1.5 flex items-center p-1.5">
                         <span className="sr-only">Open user menu</span>
                         {userDetails.profilePicture ? (
-                                <Image
+                                <ImageWithFallback
                                     src={userDetails.profilePicture}
                                     alt="User profile"
                                     width={32}    // Set desired width
@@ -26,7 +27,7 @@ const UserMenu: React.FC = () => {
                                     className="rounded-full bg-gray-50"
                             
                                 />)
-                            : (<Image
+                            : (<ImageWithFallback
                                 src="/images/truenorth_logo.png" 
                                 alt="User profile"
                                 width={32}    // Set desired width
@@ -42,7 +43,7 @@ const UserMenu: React.FC = () => {
                         </span>
                     </MenuButton>
                     <MenuItems className="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
-                        {userNavigation.map((item) => (
+                        {/* {userNavigation.map((item) => (
                             <MenuItem key={item.name}>
                                 {({ focus }) => (
                                     <a
@@ -54,7 +55,7 @@ const UserMenu: React.FC = () => {
                                     </a>
                                 )}
                             </MenuItem>
-                        ))}
+                        ))} */}
                     </MenuItems>
                 </>
             ) : (

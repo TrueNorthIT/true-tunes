@@ -1,9 +1,13 @@
-import { useSonosContext } from "@providers/SonosContext";
+"use client";
+
+import { useSonosQueue, useSonosState } from "@providers/SonosContext";
 import Image, { StaticImageData } from "next/image";
 import { useEffect, useState } from "react";
 import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext"; // Import the provider
 
 import truenorth_logo from "@public/images/truenorth_logo.png";
+import ImageWithFallback from "@components/ImageWithFallback";
+import { Track } from "@svrooij/sonos/lib/models";
 
 export default function NowPlayingCard() {
     const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(truenorth_logo);
@@ -11,7 +15,24 @@ export default function NowPlayingCard() {
     const [albumName, setAlbumName] = useState("TrueNorth Radio");
     const [artistName, setArtistName] = useState("TrueNorth");
 
-    const player = useSonosContext();
+
+    const queue = useSonosQueue();
+
+
+    useEffect(() => {
+        if (queue.queue.length > 0) {
+            const currentTrack = queue.queue[queue.currentTrackIndex];
+            setAlbumArtUri(currentTrack.AlbumArtUri || truenorth_logo);
+            setAlbumName(currentTrack.Album || "Unknown Album");
+            setArtistName(currentTrack.Artist || "Unknown Artist");
+            setTrackName(currentTrack.Title || "Unknown Track");
+        } else {
+            setAlbumArtUri(truenorth_logo);
+            setAlbumName("TrueNorth Radio");
+            setArtistName("TrueNorth");
+            setTrackName("TrueNorth Radio");
+        }
+    }, [queue]);
 
     const [isSmall, setIsSmall] = useState(false);
 
@@ -24,22 +45,6 @@ export default function NowPlayingCard() {
         return () => breakpoint.unsubscribe();        
     }, [registerBreakpoint]);
 
-    useEffect(() => {
-        if (player.playbackState?.positionInfo?.TrackMetaData) {
-            const metaData = player.playbackState.positionInfo.TrackMetaData;
-
-            setAlbumArtUri(metaData.AlbumArtUri || truenorth_logo);
-            setAlbumName(metaData.Album || "Unknown Album");
-            setArtistName(metaData.Artist || "Unknown Artist");
-            setTrackName(metaData.Title || "Unknown Track");
-        } else {
-            setAlbumArtUri(truenorth_logo);
-            setAlbumName("TrueNorth Radio");
-            setArtistName("TrueNorth");
-            setTrackName("TrueNorth Radio");
-        }
-    }, [player.playbackState]);
-
 
     return (
         <div 
@@ -47,14 +52,13 @@ export default function NowPlayingCard() {
         >
             {/* Album Art */}
             <div className={"relative content-center max-w-64 " + (isSmall ? "w-full mx-auto max-w-64 mb-4" : "w-1/3 mr-8")}>
-                <Image
+                <ImageWithFallback
                     src={albumArtUri}
                     alt={albumName}
-                    layout="responsive"
                     width={1}
                     height={1}
                     className="rounded-lg"
-                    objectFit="cover"
+                    priority={true}
                 />
             </div>
 

@@ -2,6 +2,7 @@ import { BrowseResponse, Track } from "@svrooij/sonos/lib/models";
 import { SonosState } from "@svrooij/sonos/lib/models/sonos-state";
 import { MediaList } from "@svrooij/sonos/lib/musicservices/smapi-client";
 import  { SonosGroupManager }  from "../../../main/SonosGroupManager";
+import { ArtistDetails } from "../../../main/MusicAPIService";
 
 export const ipcService = {
     connect: (groupName: string): Promise<string> => {
@@ -33,7 +34,11 @@ export const ipcService = {
 
     getGenreInfo: (artistName: string, albumName: string): Promise<any> => {
         return window.ipc.invoke('get-genre-info', artistName, albumName);
-    }   
+    },
+
+    getArtistDetails: (artistName: string): Promise<ArtistDetails> =>  {
+        return window.ipc.invoke('getArtistDetails', artistName)
+    }
 
 };
 

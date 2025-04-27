@@ -1,4 +1,4 @@
-import { SonosDevice, SonosEvents, SonosManager } from '@svrooij/sonos'
+import { SonosDevice, SonosDeviceDiscovery, SonosEvents, SonosManager } from '@svrooij/sonos'
 import { ipcMain, shell, webContents } from 'electron';
 import { mainWindow } from './background';
 import { Track } from '@svrooij/sonos/lib/models';
@@ -44,7 +44,12 @@ class SonosGroupManager {
 
     public async ConnectToServices() {
         try{
-            const spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
+            let spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
+            const link = await spotify.GetLoginLink();
+            console.log('Link URL: ', link.regUrl, ' Enter code: ', link.linkCode);
+            const credentials = await spotify.GetDeviceAuthToken(link.linkCode);
+            spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify, credentials);
+        
             console.log(spotify);
         }catch(e) {
             console.log(e);
@@ -52,14 +57,15 @@ class SonosGroupManager {
 
     }
 
-    public async Connect(groupName: string) {
-        try {
-            await this.manager.InitializeWithDiscovery(2);
-        }catch(e) {
-            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.13');
-        }
+    public async Connect(groupName?: string) {
+        await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.0.114');
+        // try {
+        //     await this.manager.InitializeWithDiscovery(20);
+        // }catch(e) {
+        // }
         
-        this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
+        if (groupName) this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
+        else this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
         if (!this.coordinator) {
             throw new Error('Coordinator not found');
         }
@@ -196,6 +202,13 @@ class SonosGroupManager {
                 UpdateID: 0
             });
             return 'Reordered';
+        }
+    }
+
+    public async RemoveTrackRangeFromQueue(startingIndex: number, numberOfTracks: number) {
+        if (this.coordinator) {
+            await this.coordinator.AVTransportService.RemoveTrackRangeFromQueue({InstanceID: 0, UpdateID: null , StartingIndex: startingIndex, NumberOfTracks: numberOfTracks});
+            return 'Removed';
         }
     }
 

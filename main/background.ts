@@ -7,8 +7,9 @@ import http from 'http'
 const isProd = process.env.NODE_ENV === 'production'
 import url from 'url'
 import AuthManager from './AuthManager'
+import { MusicAPIService } from './MusicAPIService'
 export let mainWindow: Electron.BrowserWindow | null = null;
-
+import { installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
 
 let authManager = new AuthManager();
 const sonosManager = new SonosGroupManager();
@@ -20,7 +21,12 @@ if (isProd) {
 }
 
 ; (async () => {
-  await app.whenReady()
+  await app.whenReady();
+
+  installExtension(REACT_DEVELOPER_TOOLS)
+        .then((ext) => console.log(`Added Extension:  ${ext.name}`))
+        .catch((err) => console.log('An error occurred: ', err));
+
   await authManager.Setup();
   authManager
   mainWindow = createWindow('main', {
@@ -109,6 +115,9 @@ ipcMain.handle('connectToServices', async (event) => {
   return 'Connected';
 });
 
+ipcMain.handle('getArtistDetails', async (event, artistName: string) => {
+  return await MusicAPIService.getArtistDetails(artistName);
+});
 
 ipcMain.handle('get-genre-info', async (_event, artistName: string, albumTitle: string) => {
   const url = `https://api.getgenre.com/search?artist_name=${encodeURIComponent(artistName)}&album_name=${encodeURIComponent(albumTitle)}&timeout=60`;

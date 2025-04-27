@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useSonosContext } from "../providers/SonosContext";
+import { useSonosActions, useSonosState } from "../providers/SonosContext";
 import { TimeString } from "./TimeString";
 
 export default function TrackProgressSlider() {
-    const player = useSonosContext();
+    const playerState = useSonosState();
+    const playerActions = useSonosActions(); 
     const [progress, setProgress] = useState(0); // Current progress of the track
     const [userProgress, setUserProgress] = useState(null); // Value the user is interacting with
     const [isPlaying, setIsPlaying] = useState(false);
@@ -16,8 +17,8 @@ export default function TrackProgressSlider() {
     };
 
     const seek = () => {
-        if (player?.playbackState?.positionInfo && userProgress !== null) {
-            let trackOverallTime = player.playbackState.positionInfo.TrackDuration;
+        if (playerState?.playbackState?.positionInfo && userProgress !== null) {
+            let trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
             let totalSeconds = convertTimeToSeconds(trackOverallTime);
             let seekTime = (userProgress / 100) * totalSeconds;
             
@@ -25,7 +26,7 @@ export default function TrackProgressSlider() {
             const date = new Date(seekTime * 1000);
             const strTime = date.toISOString().substr(11, 8); // Format to HH:MM:SS
             
-            player.seek(strTime);
+            playerActions.seek(strTime);
             setIsSeeking(true); // Mark as seeking to avoid immediate optimistic updates
         }
     };
@@ -37,8 +38,8 @@ export default function TrackProgressSlider() {
             // Set up interval for smooth progress updates (lerp)
             intervalId = setInterval(() => {
                 setProgress((prevProgress) => {
-                    if (player?.playbackState?.positionInfo) {
-                        let trackOverallTime = player.playbackState.positionInfo.TrackDuration;
+                    if (playerState?.playbackState?.positionInfo) {
+                        let trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
                         let totalSeconds = convertTimeToSeconds(trackOverallTime);
 
                         // Increment the progress optimistically every 100ms
@@ -53,12 +54,12 @@ export default function TrackProgressSlider() {
         return () => {
             clearInterval(intervalId);
         };
-    }, [isPlaying, player?.playbackState?.positionInfo, isSeeking]);
+    }, [isPlaying, playerState?.playbackState?.positionInfo, isSeeking]);
 
     useEffect(() => {
-        if (player?.playbackState?.positionInfo) {
-            let trackOverallTime = player.playbackState.positionInfo.TrackDuration;
-            let trackCurrentTime = player.playbackState.positionInfo.RelTime;
+        if (playerState?.playbackState?.positionInfo) {
+            let trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
+            let trackCurrentTime = playerState.playbackState.positionInfo.RelTime;
 
             if (trackOverallTime && trackCurrentTime) {
                 const totalSeconds = convertTimeToSeconds(trackOverallTime);
@@ -73,7 +74,7 @@ export default function TrackProgressSlider() {
                 }
 
                 // Check if the track is playing or paused
-                setIsPlaying(player.playbackState.transportState === "PLAYING");
+                setIsPlaying(playerState.playbackState.transportState === "PLAYING");
 
                 // If seeking, stop it once we receive the updated time from Sonos
                 if (isSeeking) {
@@ -83,11 +84,11 @@ export default function TrackProgressSlider() {
                 }
             }
         }
-    }, [player.playbackState?.positionInfo?.RelTime, userProgress, player.playbackState?.transportState, isSeeking]);
+    }, [playerState.playbackState?.positionInfo?.RelTime, userProgress, playerState.playbackState?.transportState, isSeeking]);
 
     return (
         <div className="relative flex flex-1 items-center gap-4">#
-            <TimeString date={player.playbackState?.positionInfo?.RelTime} />
+            <TimeString date={playerState.playbackState?.positionInfo?.RelTime} />
             {/* <p className="text-gray-600 font-semibold" >{player.playbackState?.positionInfo?.RelTime}</p> */}
             <input
             className="w-full"
@@ -99,7 +100,7 @@ export default function TrackProgressSlider() {
                 onChange={(e) => setUserProgress(parseInt(e.target.value))} // Update user progress on interaction
                 onMouseUp={seek} // Seek when mouse is released
             />
-            <TimeString date={player.playbackState?.positionInfo?.TrackDuration} />
+            <TimeString date={playerState.playbackState?.positionInfo?.TrackDuration} />
 
         {/* <p className="text-gray-600 font-semibold">{player.playbackState?.positionInfo?.TrackDuration}</p> */}
         </div>

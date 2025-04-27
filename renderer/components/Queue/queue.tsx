@@ -1,3 +1,5 @@
+"use client";
+
 import { createRef, useRef, useState, useCallback, useEffect } from "react";
 import { useQueue } from "@providers/QueueProvider";
 import { useScrollToCurrentTrack } from "@components/Queue/useScrollToCurrentTrack";

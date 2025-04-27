@@ -1,6 +1,6 @@
 import { Track } from '@svrooij/sonos/lib/models';
 import { createContext, SetStateAction, useContext, useEffect, useState, Dispatch} from 'react';
-import { useSonosContext } from './SonosContext';
+import { useSonosActions, useSonosQueue, useSonosState } from './SonosContext';
 
 
 interface QueueContextType {
@@ -21,19 +21,18 @@ const QueueContext = createContext({
 } as QueueContextType);
 
 export const QueueProvider = ({ children }) => {
-    const sonosContext = useSonosContext();
+    const sonosQueue = useSonosQueue();
+    const sonosActions = useSonosActions();
 
     const [followingQueue, setFollowingQueue] = useState(false);
-    const [queue, setQueue] = useState<Track[]>([]);
 
     const reorderTracksInQueue =(startingIndex: number, numberOfTracks: number, insertBefore: number) => {
-        sonosContext.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
+        sonosActions.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
     }
 
-    useEffect(() => setQueue(sonosContext.queue), [sonosContext.queue]);
 
     return (
-        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue, reorderTracksInQueue, currentTrackIndex: sonosContext.playbackState.positionInfo.Track }}>
+        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue: sonosQueue.queue, reorderTracksInQueue, currentTrackIndex: sonosQueue.currentTrackIndex }}>
             {children}
         </QueueContext.Provider>
     );

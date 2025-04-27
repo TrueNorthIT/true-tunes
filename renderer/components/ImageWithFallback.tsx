@@ -1,46 +1,43 @@
-import { ImageLoader, OnLoadingComplete, PlaceholderValue, StaticImport } from "next/dist/shared/lib/get-img-props";
+import { ImageLoader, ImageProps, OnLoadingComplete, PlaceholderValue, StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import missing_album_art from '@public/images/missing_album_art.png';
 
 
-type ImageWithFallbackProps = Omit<React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>, "height" | "width" | "loading" | "ref" | "alt" | "src" | "srcSet"> & {
+type ImageWithFallbackProps = Omit<ImageProps, "src" | "alt"> & {
     src: string | StaticImport;
     alt: string;
-    width?: number | `${number}` | undefined;
-    height?: number | `${number}` | undefined;
-    fill?: boolean | undefined;
-    loader?: ImageLoader | undefined;
-    quality?: number | `${number}` | undefined;
-    priority?: boolean | undefined;
-    loading?: "eager" | "lazy" | undefined;
-    placeholder?: PlaceholderValue | undefined;
-    blurDataURL?: string | undefined;
-    unoptimized?: boolean | undefined;
-    overrideSrc?: string | undefined;
-    onLoadingComplete?: OnLoadingComplete | undefined;
-    layout?: string | undefined;
-    objectFit?: string | undefined;
-    objectPosition?: string | undefined;
-    lazyBoundary?: string | undefined;
-    lazyRoot?: string | undefined;
-} & React.RefAttributes<HTMLImageElement | null>
-& { fallback: string | StaticImport }
+    fallback?: string | StaticImport;
+};
 
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({fallback, alt, src,...props }) => {
-    const [error, setError] = useState(null)
-
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ fallback, alt, src, ...props }) => {
+    const fallbackSrc = fallback ?? missing_album_art.src;
+    const [imageSrc, setImageSrc] = useState<string | StaticImport>(src ?? fallbackSrc);
+    const [hasError, setHasError] = useState(false);
+    
     useEffect(() => {
-        setError(null)
-    }, [src])
+        setImageSrc(src ?? fallbackSrc);
+        setHasError(false);
+    }, [src, fallbackSrc]);
+
+    const handleError = () => {
+        if (!hasError) {
+            setHasError(true);
+            setImageSrc(fallbackSrc);
+        }
+    };
 
     return (
         <Image
-            alt={alt}
-            onError={setError}
-            src={error ? fallback : src}
+            alt={alt ?? "No alt text provided"}
+            src={imageSrc}
+
+            onError={handleError}
             {...props}
+            width={640}
+            height={640}
         />
-    )
+    );
 }
 
 export default ImageWithFallback;

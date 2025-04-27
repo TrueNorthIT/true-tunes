@@ -1,4 +1,6 @@
+import ImageWithFallback from '@components/ImageWithFallback';
 import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import Image from 'next/image';
 
 export interface IArtistEntity extends MediaItem {
 
@@ -17,7 +19,7 @@ const ArtistEntity: React.FC<Props> = (props) => {
     return (
 <li className="relative hover:underline underline-offset-2 list-none">
   <div className="group aspect-square w-32 rounded-full overflow-hidden bg-gray-200 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
-    <img
+    <ImageWithFallback
       alt=""
       src={props?.entity?.albumArtURI}
       className="w-full h-full object-cover group-hover:opacity-75"

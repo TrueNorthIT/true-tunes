@@ -63,7 +63,7 @@ export const AsideBreakpointProvider: React.FC<AsideBreakpointProviderProps> = (
     // Update sidebar height based on the main content and the NowPlayingCard
     const updateSidebarHeight =  useCallback(() => {
         if (!mainRef.current || !nowPlayingCardRef.current) return;
-        const newSidebarHeight = mainRef.current.clientHeight - (nowPlayingCardRef.current.clientHeight + 80);
+        const newSidebarHeight = mainRef.current.clientHeight - (nowPlayingCardRef.current.clientHeight );
         setSidebarHeight(newSidebarHeight);
     }, [mainRef, nowPlayingCardRef]);
 
@@ -129,7 +129,8 @@ export const AsideBreakpointProvider: React.FC<AsideBreakpointProviderProps> = (
                 registerBreakpoint,
             }}
         >
-            <div
+            <div 
+            className='h-full'
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
             >

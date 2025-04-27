@@ -1,3 +1,4 @@
+"use client";
 import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext";
 import { QueueProvider } from "@providers/QueueProvider";
 import NowPlayingCard from "@components/Queue/nowPlayingCard";
@@ -19,7 +20,7 @@ export default function QueueAside() {
         <aside
             ref={asideRef}
             style={{ width: `${sidebarWidth}px`, height: `${sidebarHeight}px` }}
-            className={"relative flex-shrink-0 px-4 py-6 h-full" + (isSmall ? " px-2" : "")}
+            className={"relative flex-shrink-0 pl-4 py-6 h-full" + (isSmall ? " pl-2" : "")}
         >
             <QueueProvider>
                 <div ref={nowPlayingCardRef} >

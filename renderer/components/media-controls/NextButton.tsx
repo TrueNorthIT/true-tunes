@@ -1,9 +1,9 @@
 import { ForwardIcon } from "@heroicons/react/24/solid"
-import { useSonosContext } from "../providers/SonosContext"
+import { useSonosActions } from "../providers/SonosContext"
 
 export default function NextButton() {
 
-    const player = useSonosContext()
+    const player = useSonosActions()
 
     return (
         <button

@@ -1,54 +1,41 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import { useSonosContext } from '@providers/SonosContext';
+import { useSonosActions } from '@providers/SonosContext';
 import { SonosSearchTypes } from '@enums/SonosSearchType';
-import { Services } from '@enums/Services';
-import { ITrackEntity } from '@components/result-types/trackEntity';
-import { IArtistEntity } from '@components/result-types/artistEntity';
-import { IAlbumEntity } from '@components/result-types/albumEntity';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
-// SearchBar.tsx
-interface SearchBarProps {
-    onSearchResults: (results: {
-        type: SonosSearchTypes;
-        tracks: ITrackEntity[];
-        artists: IArtistEntity[];
-        albums: IAlbumEntity[];
-    }) => void;
-}
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearchResults }) => {
-    const player = useSonosContext();
+const SearchBar: React.FC = () => {
+    const player = useSonosActions();
     const [searchType, setSearchType] = React.useState(SonosSearchTypes.All);
-
+    const router = useRouter()
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             const query = (event.target as HTMLInputElement).value;
 
-            if (searchType === SonosSearchTypes.All) {
-                player.fullFatSearch(query, Services.Spotify).then((result) => {
-                    console.log('Search result:', result);
-                    onSearchResults({
-                        type: searchType,
-                        tracks: result.track.mediaMetadata as ITrackEntity[] || [],
-                        artists: result.artist.mediaCollection || [],
-                        albums: result.album.mediaCollection as IAlbumEntity[] || [],
-                    });
-                });
-            } else {
-                player.search(query, searchType, Services.Spotify, 10).then((result) => {
-                    const tracks = searchType === SonosSearchTypes.Track ? result.mediaMetadata as ITrackEntity[] || [] : [];
-                    const collection = result.mediaCollection || [];
-
-                    onSearchResults({
-                        type: searchType,
-                        tracks,
-                        artists: searchType === SonosSearchTypes.Artist ? collection : [],
-                        albums: searchType === SonosSearchTypes.Album ? collection as IAlbumEntity[] : [],
-                    });
-                });
+            switch (searchType) {
+                case SonosSearchTypes.Track:
+                    if (query) router.push(`/music/search/track/${query}`)    
+                    else router.push(`/music`)
+                    break;
+                case SonosSearchTypes.Artist:
+                    if (query) router.push(`/music/search/artist/${query}`)    
+                    else router.push(`/music`)
+                    break;
+                case SonosSearchTypes.Album:
+                    if (query) router.push(`/music/search/album/${query}`)    
+                    else router.push(`/music`)
+                    break;
+                case SonosSearchTypes.All:
+                default:
+                    if (query) router.push(`/music/search/all/${query}`)    
+                    else router.push(`/music`)
+                    break;
             }
+
+
 
         }
     };

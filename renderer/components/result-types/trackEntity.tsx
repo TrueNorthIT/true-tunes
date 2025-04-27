@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ImageWithFallback from '@components/ImageWithFallback';
 import missing_album_art from '@public/images/missing_album_art.png';
 import { useContextMenuManager } from '@providers/ContextMenuProvider';
-import { useSonosContext } from '@components/providers/SonosContext';
+import { useSonosActions } from '@components/providers/SonosContext';
 
 export interface ITrackEntity extends MediaItem {
     trackMetadata: {
@@ -29,7 +29,7 @@ const TrackEntity: React.FC<{
     isSearchResult?: boolean,
     onSelectChange?: (isSelected: boolean) => void
 }> = (props) => {
-    const player = useSonosContext();
+    const player = useSonosActions();
 
     const { handleContextMenu } = useContextMenuManager();
     const [menuOpened, setMenuOpened] = useState(false);
@@ -72,7 +72,7 @@ const TrackEntity: React.FC<{
     const searchContextMenuOptions = [
         {
             label: 'Play Now', onClick: async () => {
-                await player.addToQueue(track?.TrackUri, player.playbackState.positionInfo.Track + 1);
+                await player.playNext(track?.TrackUri);
                 player.next();
 
             }
@@ -83,7 +83,7 @@ const TrackEntity: React.FC<{
 
     const contextMenuOptions = [
         { label: 'Play Now', onClick: () => player.jumpToPointInQueue(props.index) },
-        { label: 'Remove from Queue', onClick: () => console.log('Add to Queue clicked') },
+        { label: 'Remove from Queue', onClick: () => player.removeFromQueue(props.index) },
         { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
     ];
 
@@ -119,7 +119,6 @@ const TrackEntity: React.FC<{
                         width={100}
                         height={100}
                         className={"w-full h-full max-w-16 max-h-16 rounded-lg " + (props.small ? "min-w-8 min-h-8 " : "min-w-16 min-h-16 ")}
-                        objectFit="cover"
                     />
                     {props.playing && (
                         <div className="absolute inset-0 bg-gray-800 bg-opacity-80 flex items-center justify-center rounded-lg">
