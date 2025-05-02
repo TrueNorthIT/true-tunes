@@ -1,6 +1,6 @@
 "use client";
 
-import { useSonosQueue, useSonosState } from "@providers/SonosContext";
+import { useSonosActions, useSonosQueue, useSonosState } from "@providers/SonosContext";
 import Image, { StaticImageData } from "next/image";
 import { useEffect, useState } from "react";
 import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext"; // Import the provider
@@ -8,20 +8,34 @@ import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContex
 import truenorth_logo from "@public/images/truenorth_logo.png";
 import ImageWithFallback from "@components/ImageWithFallback";
 import { Track } from "@svrooij/sonos/lib/models";
+import { ITrackEntity } from "@components/result-types/trackEntity";
+import Link from "next/link";
 
 export default function NowPlayingCard() {
     const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(truenorth_logo);
     const [trackName, setTrackName] = useState("TrueNorth Radio");
     const [albumName, setAlbumName] = useState("TrueNorth Radio");
     const [artistName, setArtistName] = useState("TrueNorth");
+    const [artistId, setArtistId] = useState<string | null>(null);
+    const [albumId, setAlbumId] = useState<string | null>(null);
 
 
     const queue = useSonosQueue();
-
+    const actions = useSonosActions();
 
     useEffect(() => {
         if (queue.queue.length > 0) {
             const currentTrack = queue.queue[queue.currentTrackIndex-1];
+            console.log("Current Track: ", currentTrack);
+            const trackId = currentTrack?.TrackUri.match(/spotify:track:[^?]+/)[0]
+
+            actions.getItemMetadata(trackId).then((metadata) => {
+                console.log("Metadata: ", metadata);
+                setAlbumId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.albumId);             
+                setArtistId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.artistId);
+            });
+
+
             setAlbumArtUri(currentTrack?.AlbumArtUri || truenorth_logo);
             setAlbumName(currentTrack?.Album || "Unknown Album");
             setArtistName(currentTrack?.Artist || "Unknown Artist");
@@ -73,13 +87,17 @@ export default function NowPlayingCard() {
                 <div>
                     <label className="text-gray-400 text-sm">Artist</label>
                     <h2 className="text-gray-300" title={artistName}>
-                        {artistName}
+                        <Link href={`/music/view/artist/${artistId}`} className="hover:underline">
+                            {artistName}
+                        </Link>
                     </h2>
                 </div>
                 <div>
                     <label className="text-gray-400 text-sm">Album</label>
                     <h3 className="text-gray-300" title={albumName}>
-                        {albumName}
+                        <Link href={`/music/view/album/${albumId}`} className="hover:underline">
+                            {albumName}
+                        </Link>
                     </h3>
                 </div>
             </div>

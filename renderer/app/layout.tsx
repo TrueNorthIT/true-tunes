@@ -8,6 +8,7 @@ import { ContextMenuProvider } from '@components/providers/ContextMenuProvider';
 import Sidebar from '@components/layout/Sidebar';
 import Header from '@components/layout/Header';
 import { useState } from 'react';
+import { closestCenter, DndContext } from '@dnd-kit/core';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -25,13 +26,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <AuthProvider>
                     <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
                         <ContextMenuProvider>
-                            <div>
-                                <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-                                <div className="lg:pl-20">
-                                    <Header setSidebarOpen={setSidebarOpen} />
-                                    <main style={{ height: 'calc(100vh - 64px)' }} >{children}</main>
+                             
+                                <div>
+                                    <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                                    <div className="lg:pl-20">
+                                        <Header setSidebarOpen={setSidebarOpen} />
+                                        <main style={{ height: 'calc(100vh - 64px)' }} >{children}</main>
+                                    </div>
                                 </div>
-                            </div>
                         </ContextMenuProvider>
                     </AudioProvider>
                 </AuthProvider>

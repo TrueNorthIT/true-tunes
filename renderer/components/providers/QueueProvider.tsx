@@ -24,7 +24,7 @@ export const QueueProvider = ({ children }) => {
     const sonosQueue = useSonosQueue();
     const sonosActions = useSonosActions();
 
-    const [followingQueue, setFollowingQueue] = useState(false);
+    const [followingQueue, setFollowingQueue] = useState(true);
 
     const reorderTracksInQueue =(startingIndex: number, numberOfTracks: number, insertBefore: number) => {
         sonosActions.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);

@@ -18,12 +18,12 @@ export default function Page({ params }: { params: { query: string } }) {
 
     const fetchAlbums = useCallback(async (pageToFetch: number) => {
         if (!query) return;
-
+        const cleanQuery = decodeURI(query);
         console.log("Fetching albums for page:", pageToFetch);
         setLoading(true);
 
         const result = await player.search(
-            query,
+            cleanQuery,
             SonosSearchTypes.Album,
             Services.Spotify,
             pageSize,
@@ -93,7 +93,7 @@ export default function Page({ params }: { params: { query: string } }) {
                 Albums
             </h2>
 
-            <div className="grid grid-cols-3 @[1000px]:grid-cols-4 @[1200px]:grid-cols-6 gap-4">
+            <div className="grid grid-cols-6 gap-4">
                 {searchResults.map((album) => (
                     <AlbumEntity key={`search-${album.id}`} entity={album} onSelect={() => router.push(`/music/view/album/${album.id}`)} />
                 ))}

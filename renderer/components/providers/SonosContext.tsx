@@ -109,7 +109,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const queue = useMemo(() => state.queue, [state.queue]);
     const currentTrackIndex = useMemo(() => {
         if (state.playbackState?.positionInfo) {
-            return state.playbackState.positionInfo.Track ;
+            return state.playbackState.positionInfo.Track;
         }
         return 0;
     }, [state.playbackState?.positionInfo]);
@@ -200,6 +200,13 @@ export function useSonosActions() {
 }
 
 function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTime: React.Dispatch<React.SetStateAction<number | null>>): SonosActions {
+
+    const searchCache = new Map<string, MediaList>();
+    const fullFatSearchCache = new Map<string, fullFatSearchResult>();
+    const metadataCache = new Map<string, MediaList>();
+    const itemMetadataCache = new Map<string, MediaList>();
+
+
     async function refreshPlaybackStateAndQueue() {
         const playbackState = await sonos.GetPlaybackState();
         dispatch({ type: 'SET_PLAYBACK_STATE', payload: playbackState });
@@ -285,16 +292,30 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
                 await refreshPlaybackState();
             });
         },
-        search: async (term, type, service, count, skip = 0) => {
-            return await sonos.Search(term, type, service, count, skip);
+        search: async (searchTerm, searchType, service, resultCount, skip = 0) => {
+            const key = `${searchTerm}|${searchType}|${service}|${resultCount}|${skip}`;
+            if (searchCache.has(key)) {
+                return searchCache.get(key)!;
+            }
+            const result = await sonos.Search(searchTerm, searchType, service, resultCount, skip);
+            searchCache.set(key, result);
+            return result;
         },
-        fullFatSearch: async (term, service) => {
-            return {
-                track: await sonos.Search(term, SonosSearchTypes.Track, service, 12),
-                album: await sonos.Search(term, SonosSearchTypes.Album, service, 12),
-                artist: await sonos.Search(term, SonosSearchTypes.Artist, service, 20)
+
+        fullFatSearch: async (searchTerm, service) => {
+            const key = `${searchTerm}|${service}`;
+            if (fullFatSearchCache.has(key)) {
+                return fullFatSearchCache.get(key)!;
+            }
+            const result: fullFatSearchResult = {
+                track: await sonos.Search(searchTerm, SonosSearchTypes.Track, service, 32),
+                album: await sonos.Search(searchTerm, SonosSearchTypes.Album, service, 12),
+                artist: await sonos.Search(searchTerm, SonosSearchTypes.Artist, service, 20)
             };
+            fullFatSearchCache.set(key, result);
+            return result;
         },
+
         playSongNow: (uri) => { sonos.PlaySongNow(uri); },
         reorderTracksInQueue: (start, count, insertBefore) => { sonos.ReorderTracksInQueue(start, count, insertBefore); },
         addToQueue: async (uri, index) => { await sonos.AddToQueue(uri, index); },
@@ -302,8 +323,22 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
             const playbackState = await sonos.GetPlaybackState();
             await sonos.AddToQueue(uri, playbackState.positionInfo.Track + 1);
         },
-        getMetadata: async (itemId) => { return await sonos.GetMetadata(Services.Spotify, itemId); },
-        getItemMetadata: async (itemId) => { return await sonos.GetItemMetadata(Services.Spotify, itemId); },
+        getMetadata: async (itemId) => { 
+            if (metadataCache.has(itemId)) {
+                return metadataCache.get(itemId)!;
+            }
+            const metadata = await sonos.GetMetadata(Services.Spotify, itemId);
+            metadataCache.set(itemId, metadata);
+            return metadata;
+        },
+        getItemMetadata: async (itemId) => { 
+            if (itemMetadataCache.has(itemId)) {
+                return itemMetadataCache.get(itemId)!;
+            }
+            const itemMetadata = await sonos.GetItemMetadata(Services.Spotify, itemId);
+            itemMetadataCache.set(itemId, itemMetadata);
+            return itemMetadata;
+        },
         removeFromQueue: (index) => { sonos.RemoveTrackRangeFromQueue(index, 1); },
         removeRangeFromQueue: (index, count) => { sonos.RemoveTrackRangeFromQueue(index, count); }
     };

@@ -5,6 +5,7 @@ import ImageWithFallback from '@components/ImageWithFallback';
 import missing_album_art from '@public/images/missing_album_art.png';
 import { useContextMenuManager } from '@providers/ContextMenuProvider';
 import { useSonosActions } from '@components/providers/SonosContext';
+import React from 'react';
 
 export interface ITrackEntity extends MediaItem {
     trackMetadata: {
@@ -13,6 +14,8 @@ export interface ITrackEntity extends MediaItem {
         album: string;
         trackNumber?: number;
         duration?: number;
+        albumId?: string;
+        artistId?: string;
     }
     tags?: {
         explicit?: boolean
@@ -39,7 +42,6 @@ const TrackEntity: React.FC<{
 
 
     useEffect(() => {
-        console.log('Show Image: ', props.showImage);
         if (props.showImage !== null) setShowAlbumArt(props.showImage);
         else setShowAlbumArt(true);
     }, [props.showImage]);
@@ -83,7 +85,7 @@ const TrackEntity: React.FC<{
 
     const contextMenuOptions = [
         { label: 'Play Now', onClick: () => player.jumpToPointInQueue(props.index) },
-        { label: 'Remove from Queue', onClick: () => player.removeFromQueue(props.index) },
+        { label: 'Remove from Queue', onClick: () => player.removeFromQueue(props.index+1) },
         { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
     ];
 
@@ -162,4 +164,4 @@ const TrackEntity: React.FC<{
 };
 
 
-export default TrackEntity;
+export default React.memo(TrackEntity);

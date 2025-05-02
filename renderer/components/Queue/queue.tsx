@@ -1,39 +1,134 @@
 "use client";
 
 import { createRef, useRef, useState, useCallback, useEffect } from "react";
+import { DndContext, closestCenter, DragOverlay, useDraggable, useDndMonitor, UniqueIdentifier, useDndContext } from "@dnd-kit/core";
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useQueue } from "@providers/QueueProvider";
 import { useScrollToCurrentTrack } from "@components/Queue/useScrollToCurrentTrack";
 import { useHandleManualScroll } from "@components/Queue/useHandleManualScroll";
 import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
 import TrackEntity from "@components/result-types/trackEntity";
 import Seperator from "@components/Seperator";
-import {
-    closestCenter,
-    DndContext,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragOverlay
-} from "@dnd-kit/core";
-import {
-    SortableContext,
-    verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import DraggableTrack from "@components/DraggableTrack";
-
+import { CSS } from "@dnd-kit/utilities";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
+import { createPortal } from 'react-dom';
+import React from "react";
+import { useSonosActions } from "@components/providers/SonosContext";
 export default function Queue() {
     const queue = useQueue();
+    const actions = useSonosActions();
     const trackRefs = useRef([]);
     const queueContainerRef = useRef<HTMLDivElement>(null);
 
     const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState(queue.currentTrackIndex);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isSmall, setIsSmall] = useState(false);
-    const [hideALbumArt, setHideAlbumArt] = useState(false);
+    const [hideAlbumArt, setHideAlbumArt] = useState(false);
     const [selectedTracks, setSelectedTracks] = useState<number[]>([]);
     const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
     const { registerBreakpoint } = useAsideBreakpoint();
+
+    const [optimisticQueue, setOptimisticQueue] = useState(queue.queue);
+
+
+    const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
+    const { active } = useDndContext();
+    useDndMonitor({
+        onDragOver(event) {
+            const { active, over } = event;
+            if (!over) {
+                setOverId(null);
+                return;
+            }
+
+            const overRect = over.rect;
+            const activeRect = active.rect.current.translated; // Live moving rect!
+
+            if (!activeRect) {
+                setOverId(null);
+                return;
+            }
+
+            const activeLeft = activeRect.left;
+
+            const isWithinX =
+                activeLeft >= overRect.left &&
+                activeLeft <= overRect.left + overRect.width;
+
+
+
+            if (active.id.toString().startsWith("search") && isWithinX) {
+                setOverId(over.id);
+            } else {
+                setOverId(null);
+            }
+        },
+
+
+
+        onDragStart(event: any) {
+            setActiveId(event.active.id);
+
+        },
+
+        onDragEnd(event: any) {
+            setOverId(null);
+
+            const { active, over } = event;
+            if (!over || active.id === over.id) {
+                setActiveId(null);
+                return;
+            }
+
+            if (active.id.toString().startsWith("search")) {
+                const overRect = over.rect;
+                const activeRect = active.rect.current.translated; // Live moving rect!
+
+
+                const activeLeft = activeRect.left;
+
+                const isWithinX =
+                    activeLeft >= overRect.left &&
+                    activeLeft <= overRect.left + overRect.width;
+
+                if (!isWithinX) return
+                    
+
+                // Optimistic update
+                const newQueue = [...optimisticQueue];
+                const newTrack = active.data.current;
+                const newTrackId = active.data.current.id;
+                const newTrackIndex = parseInt(over.id);
+                const newTrackUri = active.data.current.trackMetadata?.trackUri || active.data.current.uri;
+                const newTrackObj = {
+                    ...newTrack,
+                    id: newTrackUri,
+                    trackMetadata: {
+                        ...newTrack.trackMetadata,
+                        trackUri: newTrackUri,
+                    },
+                };
+                newQueue.splice(newTrackIndex, 0, newTrackObj);
+                setOptimisticQueue(newQueue);
+
+                actions.addToQueue(active.data.current.id, Number.parseInt(over.id)+1);
+            }
+            else {
+
+
+                const oldIndex = parseInt(active.id);
+                const newIndex = parseInt(over.id);
+
+                moveTracks(oldIndex, newIndex);
+                setActiveId(null);
+            }
+        }
+    });
+
+
+
+
     useEffect(() => {
         const bp400 = registerBreakpoint(400, setIsSmall);
         const bp200 = registerBreakpoint(300, setHideAlbumArt);
@@ -47,18 +142,6 @@ export default function Queue() {
         setCurrentlyPlayingIndex(queue.currentTrackIndex - 1);
     }, [queue.currentTrackIndex]);
 
-    const isProgrammaticScrollRef = useScrollToCurrentTrack(
-        currentlyPlayingIndex,
-        trackRefs,
-        queueContainerRef,
-        queue,
-        isSmall
-    );
-
-    useHandleManualScroll(queueContainerRef, queue, isProgrammaticScrollRef);
-
-    const [optimisticQueue, setOptimisticQueue] = useState(queue.queue);
-
     useEffect(() => {
         setOptimisticQueue(queue.queue);
     }, [queue.queue]);
@@ -71,62 +154,13 @@ export default function Queue() {
             .map((_, i) => trackRefs.current[i] || createRef());
     }
 
-    const sensors = useSensors(useSensor(PointerSensor));
-    const moveTracks = useCallback((fromIndices: number[], toIndex: number) => {
-        console.log("Move Tracks", fromIndices, toIndex);
+    const moveTracks = useCallback((from: number, to: number) => {
+        const updated = arrayMove(optimisticQueue, from, to);
+        setOptimisticQueue(updated);
 
-        const sortedFrom = [...fromIndices].sort((a, b) => a - b);
-        const movingTracks = sortedFrom.map(i => optimisticQueue[i]);
-
-        const withoutTracks = optimisticQueue.filter((_, i) => !sortedFrom.includes(i));
-
-        const isMovingDown = sortedFrom[0] < toIndex;
-        const numRemovedBeforeTarget = sortedFrom.filter(i => i < toIndex).length;
-
-        let insertAt = toIndex - numRemovedBeforeTarget;
-        if (isMovingDown) {
-            insertAt += 1;
-        }
-
-        const updatedQueue = [
-            ...withoutTracks.slice(0, insertAt),
-            ...movingTracks,
-            ...withoutTracks.slice(insertAt),
-        ];
-
-        console.log("Insert at", insertAt, "from", sortedFrom, "to", toIndex);
-
-        setOptimisticQueue(updatedQueue);
-
-        // Backend reorder: one block move
-        queue.reorderTracksInQueue(sortedFrom[0] + 1, sortedFrom.length, insertAt + 1);
+        // backend reorder
+        queue.reorderTracksInQueue(from + 1, 1, to + 1);
     }, [optimisticQueue, queue]);
-
-
-
-
-
-    const handleDragStart = (event) => {
-        const draggedIndex = parseInt(event.active.id);
-        setActiveId(event.active.id);
-
-        // Ensure the dragged track is selected
-        setSelectedTracks((prev) =>
-            prev.includes(draggedIndex) ? prev : [draggedIndex]
-        );
-    };
-
-    const handleDragEnd = (event) => {
-        const { active, over } = event;
-        setActiveId(null);
-        if (!over || active.id === over.id) return;
-
-        const toIndex = parseInt(over.id);
-        const fromIndices = [...selectedTracks].sort((a, b) => a - b);
-
-        moveTracks(fromIndices, toIndex);
-        setSelectedTracks([])
-    };
 
     const handleTrackSelect = (index: number, e: React.MouseEvent) => {
         const isSelected = selectedTracks.includes(index);
@@ -146,74 +180,171 @@ export default function Queue() {
         setLastSelectedIndex(index);
     };
 
+
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-        >
-            <SortableContext items={items} strategy={verticalListSortingStrategy}>
-                <div ref={queueContainerRef} className="overflow-y-auto h-full slick-scrollbar">
-                    {items.map((id) => {
-                        const index = parseInt(id);
-                        const track = optimisticQueue[index];
-                        const isDraggingThis = activeId !== null && selectedTracks.includes(index);
 
-                        if (isDraggingThis) return (
-                            <div key={id} className="h-[72px] opacity-0 pointer-events-none" />
-                        );
+        <div ref={queueContainerRef} className="overflow-y-auto h-full slick-scrollbar">
+            <SortableContext
+                items={items}
+                strategy={verticalListSortingStrategy}
+            >
 
-                        return (
-                            <DraggableTrack
-                                key={id}
-                                index={index}
-                                moveTrack={moveTracks}
-                                trackRef={trackRefs.current[index]}
-                                onGrabHandle={(setActivatorNodeRef, listeners, attributes) => (
-                                    <div
-                                        ref={setActivatorNodeRef}
-                                        {...listeners}
-                                        {...attributes}
-                                        className="mr-3 p-1 text-gray-400 cursor-grab hover:text-white active:cursor-grabbing"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 9h2v2H7V9zm4 0h2v2h-2V9zM7 14h2v2H7v-2zm4 0h2v2h-2v-2z" />
-                                        </svg>
-                                    </div>
-                                )}
-                            >
-                                <div onClick={(e) => handleTrackSelect(index, e)} className="grow">
+                {items.map((id, idx) => {
+                    const index = parseInt(id);
+                    const track = optimisticQueue[index];
+
+                    const isOver = overId === id;
+
+                    return (
+                        <React.Fragment key={id}>
+                            {isOver && (
+                                <>
                                     <TrackEntity
-                                        entity={track}
-                                        playing={currentlyPlayingIndex === index}
-                                        small={isSmall}
+                                        entity={active.data.current}
+                                        playing={false}
+                                        small={false}
                                         index={index}
-                                        showImage={!hideALbumArt}
-                                        isSelected={selectedTracks.includes(index)}
+                                        showImage={!hideAlbumArt}
+                                        isSelected={false}
                                     />
                                     <Seperator />
-                                </div>
-                            </DraggableTrack>
-                        );
-                    })}
-                </div>
-            </SortableContext>
 
-            <DragOverlay>
-                {activeId !== null ? (
-                    <div className="opacity-50 space-y-1">
-                        {selectedTracks.map((i) => (
-                            <TrackEntity
-                                key={i}
-                                entity={queue.queue[i]}
+                                </>
+                            )}
+
+                            <SortableTrack
+                                id={id}
+                                index={index}
+                                track={track}
+                                selected={selectedTracks.includes(index)}
+                                playing={currentlyPlayingIndex === index}
                                 small={isSmall}
-                                playing={false}
+                                hideAlbumArt={hideAlbumArt}
+                                onSelect={handleTrackSelect}
                             />
-                        ))}
+                        </React.Fragment>
+                    );
+                })}
+
+            </SortableContext>
+        </div>
+
+    );
+}
+
+// ---
+
+export function SortableTrack({ id, index, track, selected, playing, small, hideAlbumArt, onSelect }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0 : 1,
+    };
+
+
+    return (
+        <>
+
+            {isDragging && (
+
+                <DragOverlay>
+                    <div className="p-2 bg-neutral-800 rounded">
+                        <TrackEntity
+                            entity={track}
+                            playing={playing}
+                            small={small}
+                            index={index}
+                            showImage={!hideAlbumArt}
+                            isSelected={selected}
+                        />
                     </div>
-                ) : null}
-            </DragOverlay>
-        </DndContext>
+                </DragOverlay>
+            )}
+
+            <div
+                ref={setNodeRef}
+                style={style}
+                className="grow"
+                onClick={(e) => onSelect(index, e)}
+                {...attributes}
+                {...listeners}
+            >
+                <TrackEntity
+                    entity={track}
+                    playing={playing}
+                    small={small}
+                    index={index}
+                    showImage={!hideAlbumArt}
+                    isSelected={selected}
+                />
+                <Seperator />
+            </div>
+        </>
+    );
+}
+
+export function DraggableTrack({ id, index, track, selected, playing, small, hideAlbumArt, onSelect }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        isDragging,
+    } = useDraggable({ id, data: track });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        opacity: isDragging ? 0 : 1,
+        zIndex: isDragging ? 1000 : 1,
+    };
+
+    return (
+        <>
+        {isDragging &&     createPortal(
+            <DragOverlay modifiers={[snapCenterToCursor]}>
+                <div className="p-2 bg-neutral-800 rounded">
+                    <TrackEntity
+                        entity={track}
+                        playing={playing}
+                        small={small}
+                        index={index}
+                        showImage={!hideAlbumArt}
+                        isSelected={selected}
+                    />
+                </div>
+            </DragOverlay>,
+            document.body)}
+        
+
+        
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="grow"
+            onClick={(e) => onSelect(index, e)}
+            {...attributes}
+            {...listeners}
+        >
+            <TrackEntity
+                entity={track}
+                playing={playing}
+                small={small}
+                index={index}
+                showImage={!hideAlbumArt}
+                isSelected={selected}
+            />
+            {/* <Seperator /> */}
+        </div>
+        </>
+
     );
 }

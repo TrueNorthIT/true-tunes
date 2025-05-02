@@ -34,10 +34,12 @@ class MusicAPIService {
             const res = await fetch(url);
             const out = await res.json();
 
-            return {
+            const art = {
                 background: (out?.artistbackground?.[0].url || ''),
                 thumb: (out?.artistthumb?.[0].url || '')
             }
+            console.log('FanArtz art for:', mbid, ' : ', art);
+            return art;
 
 
         } catch (err) {
@@ -106,6 +108,8 @@ class MusicAPIService {
                 },
                 similarartists: similarArtists
             }
+
+            console.log('Artist details:', artist);
 
             return artist;
         } catch (error) {

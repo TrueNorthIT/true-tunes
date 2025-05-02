@@ -12,7 +12,7 @@ type ImageWithFallbackProps = Omit<ImageProps, "src" | "alt"> & {
 
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ fallback, alt, src, ...props }) => {
     const fallbackSrc = fallback ?? missing_album_art.src;
-    const [imageSrc, setImageSrc] = useState<string | StaticImport>(src ?? fallbackSrc);
+    const [imageSrc, setImageSrc] = useState<string | StaticImport>(src);
     const [hasError, setHasError] = useState(false);
     
     useEffect(() => {
@@ -23,9 +23,10 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ fallback, alt, sr
     const handleError = () => {
         if (!hasError) {
             setHasError(true);
-            setImageSrc(fallbackSrc);
+            // setImageSrc(fallbackSrc);
         }
     };
+    if (!imageSrc) return <></>
 
     return (
         <Image

@@ -9,6 +9,7 @@ import { SonosSearchTypes } from '@enums/SonosSearchType';
 import { on } from 'events';
 import Image from 'next/image';
 import ImageWithFallback from '@components/ImageWithFallback';
+import { useRouter } from 'next/navigation';
 
 interface AlbumViewProps {
     album: IAlbumEntity;
@@ -26,6 +27,9 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
     const [tracks, setTracks] = useState<ITrackEntity[]>([]);
     const [loading, setLoading] = useState(true);
     const [genres, setGenres] = useState<string[] | null>(null);
+
+    const router = useRouter();
+
     useEffect(() => {
         setLoading(true);
         player.getMetadata(album.id).then((result) => {
@@ -75,7 +79,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
                 <ImageWithFallback src={album.albumArtURI} alt={album.title} className="w-32 h-32 object-cover rounded-lg" />
                 <div>
                     <h1 className="text-2xl font-bold text-white">{album.title}</h1>
-                    <p className="text-gray-400 hover:underline" onClick={() => openArtist(album.artist, album.artistId)} >{album.artist}</p>
+                    <p className="text-gray-400 hover:underline" onClick={() => router.push(`/music/view/artist/${album.artistId}`)} >{album.artist}</p>
                     {genres === null && <p className="text-gray-400">Loading genres...</p>}
                     {(genres && genres.length) > 0 && (
                         <div className="mt-2 overflow-x-auto">
@@ -100,10 +104,11 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
             <div className="mt-6 flex flex-wrap gap-3">
                 <button
                     className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 text-sm font-medium"
-                    onClick={() => {
-                        tracks.forEach(track => {
-                            player.addToQueue(track.id);
-                        });
+                    onClick={async () => {
+                        await player.addToQueue(album.id);
+                        // tracks.forEach(track => {
+                        //     player.addToQueue(track.id);
+                        // });
                     }}
                 >
                     ➕ Add to Queue
@@ -112,9 +117,10 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
                 <button
                     className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 text-sm font-medium"
                     onClick={async () => {
-                        for (let i = 0; i < tracks.length; i++) {
-                            await player.playNext(tracks[i].id);
-                        }
+                        await player.playNext(album.id);
+                        // for (let i = 0; i < tracks.length; i++) {
+                        //     await player.playNext(tracks[i].id);
+                        // }
                     }}
                 >
                     ⏭️ Add Next

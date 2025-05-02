@@ -87,9 +87,8 @@ export default function TrackProgressSlider() {
     }, [playerState.playbackState?.positionInfo?.RelTime, userProgress, playerState.playbackState?.transportState, isSeeking]);
 
     return (
-        <div className="relative flex flex-1 items-center gap-4">#
+        <div className="relative flex flex-1 items-center gap-4">
             <TimeString date={playerState.playbackState?.positionInfo?.RelTime} />
-            {/* <p className="text-gray-600 font-semibold" >{player.playbackState?.positionInfo?.RelTime}</p> */}
             <input
             className="w-full"
                 type="range"
@@ -102,7 +101,6 @@ export default function TrackProgressSlider() {
             />
             <TimeString date={playerState.playbackState?.positionInfo?.TrackDuration} />
 
-        {/* <p className="text-gray-600 font-semibold">{player.playbackState?.positionInfo?.TrackDuration}</p> */}
         </div>
     );
 }

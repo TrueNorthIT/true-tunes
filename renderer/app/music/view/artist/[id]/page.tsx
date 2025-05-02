@@ -5,18 +5,16 @@ import { useSonosActions } from '@components/providers/SonosContext';
 import { useEffect, useState } from 'react';
 import AlbumView from '@components/Search/AlbumView';
 import { useRouter } from 'next/navigation';
+import { IArtistEntity } from '@components/result-types/artistEntity';
+import ArtistView from '@components/Search/ArtistView';
 
-export interface IAlbumEntity extends MediaItem {
-    artist: string;
-    artistId: string;
-}
 
 
 export default function Page({ params }: { params: { id: string } }) {
     const { id } = params;
     const player = useSonosActions();
     const router = useRouter();
-    const [album, setAlbum] = useState<IAlbumEntity | null>(null);
+    const [artist, setArtist] = useState<IArtistEntity | null>(null);
 
 
     useEffect(() => {
@@ -24,19 +22,19 @@ export default function Page({ params }: { params: { id: string } }) {
         const  urlDecoded = decodeURIComponent(id);
         
         player.getItemMetadata(urlDecoded).then((result) => {
-            console.log('Album Metadata:', result);
-            setAlbum(result?.mediaCollection[0] as IAlbumEntity || null);    
+            console.log('Artist Metadata:', result);
+            setArtist(result?.mediaCollection?.[0] as IArtistEntity || null);    
         });
     }, [id]); 
 
 
-    if (!album) {
+    if (!artist) {
         return <div>Loading...</div>;
     }
 
     return (
         
-        <AlbumView album={album} onBack={() => {router.back()}} />
+        <ArtistView artist={artist} onBack={() => {router.back()}} />
     );
 }
 

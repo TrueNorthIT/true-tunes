@@ -8,6 +8,7 @@ import SearchResults from "@components/Search/SearchResults";
 import { Services } from "@enums/Services";
 import { SonosSearchTypes } from "@enums/SonosSearchType";
 import { useSonosActions } from "@components/providers/SonosContext";
+import { useRouter } from "next/navigation";
 
 interface SearchResult {
     tracks: ITrackEntity[];
@@ -18,6 +19,7 @@ interface SearchResult {
 export default function Page({ params }: { params: { query: string } }) {
     const { query } = params;
     const player = useSonosActions();
+    const router = useRouter();
 
     const [searchResults, setSearchResults] = useState<SearchResult>({
         tracks: [],
@@ -37,12 +39,17 @@ export default function Page({ params }: { params: { query: string } }) {
                 albums: (result.album?.mediaCollection as IAlbumEntity[]) || [],
             });
         });
+        // Let's pre-fetch tracks, albums and artists
+        player.search(query, SonosSearchTypes.Album, Services.Spotify, 24).then((result) => console.log("Pre-loaded " + result.mediaCollection.length + " albums"));
+        player.search(query, SonosSearchTypes.Artist, Services.Spotify, 24).then((result) => console.log("Pre-loaded " + result.mediaCollection.length + " artists"));
+        player.search(query, SonosSearchTypes.Track, Services.Spotify, 24).then((result) => console.log("Pre-loaded " + result.mediaMetadata.length + " tracks"));
+
     }, [query,]); // ⬅️ Very important: dependencies!
 
     return (
         <SearchResults
-            searchType={SonosSearchTypes.All}
-            trackResults={searchResults.tracks}
+            term={query}
+            trackResults={searchResults.tracks.slice(0, 12)}
             albumResults={searchResults.albums}
             artistResults={searchResults.artists}
         />

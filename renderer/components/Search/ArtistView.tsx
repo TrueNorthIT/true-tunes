@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import AlbumEntity, { IAlbumEntity } from '@components/result-types/albumEntity';
-import TrackEntity, { ITrackEntity } from '@components/result-types/trackEntity';
+import { ITrackEntity } from '@components/result-types/trackEntity';
 import { useSonosActions } from '@providers/SonosContext';
 import { ipcService } from '@components/providers/ipcService';
 import { IArtistEntity } from '@components/result-types/artistEntity';
 import { ArtistDetails } from '../../../main/MusicAPIService';
 import SearchTrack from './SearchTrack';
-import Image from 'next/image';
 import ImageWithFallback from '@components/ImageWithFallback';
 import missing_album_art from '@public/images/missing_album_art.png';
+import { useRouter } from 'next/navigation';
 
 interface ArtistViewProps {
     artist: IArtistEntity;
@@ -27,12 +27,15 @@ const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
     const [artistDetail, setArtistDetail] = useState<ArtistDetails | null>(null);
     const [topTracks, setTopTracks] = useState<ITrackEntity[]>([]);
 
+    const router = useRouter();
+
     useEffect(() => {
         ipcService.getArtistDetails(artist.title).then((result) => {
             setArtistDetail(result);
         });
 
         player.getMetadata(artist.id).then((result) => {
+            console.log('Artist! Metadata:', result);
             const albums = result?.mediaCollection?.filter(a => a.itemType === 'album')  as IAlbumEntity[] || [];
             const topTracks = result?.mediaCollection?.filter(a => a.itemType === "trackList")?.[0] || null;
 
@@ -131,7 +134,7 @@ const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
                 <h2 className="text-xl font-semibold mb-4">Albums</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {albums.map((album) => (
-                        <AlbumEntity key={album.id} entity={album} onSelect={() => onBack?.(album)} />
+                        <AlbumEntity key={album.id} entity={album} onSelect={() => router.push(`/music/view/album/${album.id}`)} />
                     ))}
                 </div>
             </div>

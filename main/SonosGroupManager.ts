@@ -58,11 +58,14 @@ class SonosGroupManager {
     }
 
     public async Connect(groupName?: string) {
-        await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.0.114');
-        // try {
-        //     await this.manager.InitializeWithDiscovery(20);
-        // }catch(e) {
-        // }
+        try {
+            const connected = await this.manager.InitializeWithDiscovery(20);
+            if (!connected) {
+                throw new Error('No Sonos devices found');
+            }
+        }catch(e) {
+            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.10');
+        }
         
         if (groupName) this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
         else this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
