@@ -1,9 +1,9 @@
-import { Track } from '@svrooij/sonos/lib/models';
-import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import React from 'react';
 import { useEffect, useState } from 'react';
+import type { Track } from '@svrooij/sonos/lib/models';
 import ImageWithFallback from '@components/ImageWithFallback';
 import missing_album_art from '@public/images/missing_album_art.png';
-import { ITrackEntity } from '@components/result-types/trackEntity';
+import type { ITrackEntity } from '@components/result-types/trackEntity';
 
 
 const SearchTrack: React.FC<{

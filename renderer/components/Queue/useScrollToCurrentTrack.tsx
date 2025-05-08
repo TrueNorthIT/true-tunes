@@ -17,7 +17,8 @@ export function useScrollToCurrentTrack(
             const container = queueContainerRef.current;
 
             isProgrammaticScrollRef.current = true;
-
+            console.log("Scrolling to track:", currentlyPlayingIndex, trackElement, container);
+            console.log(trackRefs)
             const targetScrollTop = trackElement.offsetTop - (container.clientHeight + (isSmall ? 850 : 100)) / 2;
 
             container.scrollTo({

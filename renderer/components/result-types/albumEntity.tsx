@@ -1,18 +1,22 @@
-import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import React from 'react';
+import { CSS } from "@dnd-kit/utilities";
+import type { UniqueIdentifier} from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
 import ImageWithFallback from '@components/ImageWithFallback';
-
+import type { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import { useRouter } from 'next/navigation';
 export interface IAlbumEntity extends MediaItem {
     artist: string;
     artistId: string;
 }
 
-interface Props {
+export interface AlbumEntityProps {
     entity: IAlbumEntity;
     onSelect?: () => void; // Optional onClick handler
 }
 
 
-const AlbumEntity: React.FC<Props> = (props) => {
+const AlbumEntity: React.FC<AlbumEntityProps> = (props) => {
 
     const handleClick = (event: React.MouseEvent) => {
         event.stopPropagation(); // Prevent event bubbling
@@ -31,6 +35,55 @@ const AlbumEntity: React.FC<Props> = (props) => {
             <p className="pointer-events-none mt-2 block truncate text-sm font-medium text-gray-50">{props?.entity?.title}</p>
             <p className="pointer-events-none block text-sm font-medium text-gray-400">{props?.entity?.artist}</p>
         </li>
+    );
+}
+
+export function DraggableAlbum({ id, entity }: AlbumEntityProps & { id: UniqueIdentifier }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        isDragging,
+    } = useDraggable({
+        id, data: {
+            ...entity,
+            id: entity.id,
+            Title: entity.title,
+            Artist: entity.artist,
+            AlbumArtUri: entity.albumArtURI,
+            Album: entity.title
+
+        }
+    });
+
+    const router = useRouter();
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        opacity: isDragging ? 0 : 1,
+        zIndex: isDragging ? 1000 : 1,
+    };
+
+    return (
+
+
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="grow"
+            {...attributes}
+            {...listeners}
+        >
+            <AlbumEntity
+                key={entity.id}
+                entity={entity}
+                onSelect={() => router.push(`/music/view/album/${entity.id}`)}
+            />
+
+
+        </div>
+
     );
 }
 

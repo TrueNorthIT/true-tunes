@@ -1,13 +1,13 @@
-import { useEffect, useReducer, useState } from "react";
+import React from "react";
 import { useSonosActions, useSonosState } from "../providers/SonosContext"
 
 export default function VolumeSlider() {
-    
+
     const player = useSonosActions();
     const state = useSonosState()
-    
-    let volumeChange = (e) => {
-        let intVol = parseInt(e.target.value);
+
+    const volumeChange = (e) => {
+        const intVol = parseInt(e.target.value);
         player.setVolume(intVol);
     }
 
@@ -15,4 +15,3 @@ export default function VolumeSlider() {
         <input type="range" min="0" max="100" value={state.playbackState?.volume ?? 0} onChange={(e) => volumeChange(e)} />
     )
 }
-    

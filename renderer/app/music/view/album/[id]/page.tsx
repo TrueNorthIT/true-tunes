@@ -1,10 +1,10 @@
 "use client";
-import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
-import ImageWithFallback from '@components/ImageWithFallback';
-import { useSonosActions } from '@components/providers/SonosContext';
+import React from "react";
 import { useEffect, useState } from 'react';
-import AlbumView from '@components/Search/AlbumView';
 import { useRouter } from 'next/navigation';
+import AlbumView from '@components/Search/AlbumView';
+import { useSonosActions } from '@components/providers/SonosContext';
+import type { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 
 export interface IAlbumEntity extends MediaItem {
     artist: string;
@@ -21,13 +21,13 @@ export default function Page({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         if (!id) return;
-        const  urlDecoded = decodeURIComponent(id);
-        
+        const urlDecoded = decodeURIComponent(id);
+
         player.getItemMetadata(urlDecoded).then((result) => {
             console.log('Album Metadata:', result);
-            setAlbum(result?.mediaCollection[0] as IAlbumEntity || null);    
+            setAlbum(result?.mediaCollection[0] as IAlbumEntity || null);
         });
-    }, [id]); 
+    }, [id, player]);
 
 
     if (!album) {
@@ -35,8 +35,8 @@ export default function Page({ params }: { params: { id: string } }) {
     }
 
     return (
-        
-        <AlbumView album={album} onBack={() => {router.back()}} />
+
+        <AlbumView album={album} onBack={() => { router.back() }} />
     );
 }
 

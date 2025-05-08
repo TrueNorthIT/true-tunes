@@ -1,16 +1,16 @@
+import React from "react";
+import { TimeString } from "./TimeString";
 import { useEffect, useState } from "react";
 import { useSonosActions, useSonosState } from "../providers/SonosContext";
-import { TimeString } from "./TimeString";
-
 export default function TrackProgressSlider() {
     const playerState = useSonosState();
-    const playerActions = useSonosActions(); 
+    const playerActions = useSonosActions();
     const [progress, setProgress] = useState(0); // Current progress of the track
     const [userProgress, setUserProgress] = useState(null); // Value the user is interacting with
     const [isPlaying, setIsPlaying] = useState(false);
     const [isSeeking, setIsSeeking] = useState(false); // To handle the seek state
 
-    
+
     const convertTimeToSeconds = (timeStr) => {
         const [hours, minutes, seconds] = timeStr.split(":").map(Number);
         return hours * 3600 + minutes * 60 + seconds;
@@ -18,14 +18,14 @@ export default function TrackProgressSlider() {
 
     const seek = () => {
         if (playerState?.playbackState?.positionInfo && userProgress !== null) {
-            let trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
-            let totalSeconds = convertTimeToSeconds(trackOverallTime);
-            let seekTime = (userProgress / 100) * totalSeconds;
-            
+            const trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
+            const totalSeconds = convertTimeToSeconds(trackOverallTime);
+            const seekTime = (userProgress / 100) * totalSeconds;
+
             // Convert seekTime back to H:MM:SS
             const date = new Date(seekTime * 1000);
             const strTime = date.toISOString().substr(11, 8); // Format to HH:MM:SS
-            
+
             playerActions.seek(strTime);
             setIsSeeking(true); // Mark as seeking to avoid immediate optimistic updates
         }
@@ -39,11 +39,11 @@ export default function TrackProgressSlider() {
             intervalId = setInterval(() => {
                 setProgress((prevProgress) => {
                     if (playerState?.playbackState?.positionInfo) {
-                        let trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
-                        let totalSeconds = convertTimeToSeconds(trackOverallTime);
+                        const trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
+                        const totalSeconds = convertTimeToSeconds(trackOverallTime);
 
                         // Increment the progress optimistically every 100ms
-                        let incrementedProgress = prevProgress + (10 / totalSeconds);
+                        const incrementedProgress = prevProgress + (10 / totalSeconds);
                         return incrementedProgress < 100 ? incrementedProgress : 100;
                     }
                     return prevProgress;
@@ -58,8 +58,8 @@ export default function TrackProgressSlider() {
 
     useEffect(() => {
         if (playerState?.playbackState?.positionInfo) {
-            let trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
-            let trackCurrentTime = playerState.playbackState.positionInfo.RelTime;
+            const trackOverallTime = playerState.playbackState.positionInfo.TrackDuration;
+            const trackCurrentTime = playerState.playbackState.positionInfo.RelTime;
 
             if (trackOverallTime && trackCurrentTime) {
                 const totalSeconds = convertTimeToSeconds(trackOverallTime);
@@ -84,13 +84,13 @@ export default function TrackProgressSlider() {
                 }
             }
         }
-    }, [playerState.playbackState?.positionInfo?.RelTime, userProgress, playerState.playbackState?.transportState, isSeeking]);
+    }, [playerState.playbackState?.positionInfo?.RelTime, userProgress, playerState.playbackState?.transportState, isSeeking, playerState.playbackState?.positionInfo]);
 
     return (
         <div className="relative flex flex-1 items-center gap-4">
             <TimeString date={playerState.playbackState?.positionInfo?.RelTime} />
             <input
-            className="w-full"
+                className="w-full"
                 type="range"
                 min="0"
                 max="100"

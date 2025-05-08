@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
-const ContextMenu = ({ position, onClose, options }) => {
+export interface ContextMenuProps {
+    position: { x: number; y: number };
+    onClose: () => void;
+    options: Array<{ label: string; onClick: () => void }>;
+}
+
+const ContextMenu: React.FC<ContextMenuProps> = ({ position, onClose, options }) => {
     return (
         <div
             className="absolute z-50 shrink rounded-lg bg-white p-2 text-sm font-semibold leading-6 text-gray-900 shadow-lg ring-1 ring-gray-900/5"

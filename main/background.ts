@@ -1,17 +1,15 @@
 import path from 'path'
-import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron'
 import serve from 'electron-serve'
-import { createWindow } from './helpers'
-import { SonosGroupManager } from './SonosGroupManager'
-import http from 'http'
-const isProd = process.env.NODE_ENV === 'production'
-import url from 'url'
 import AuthManager from './AuthManager'
+import { createWindow } from './helpers'
 import { MusicAPIService } from './MusicAPIService'
-export let mainWindow: Electron.BrowserWindow | null = null;
-import { installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
+import { app, ipcMain, nativeImage, } from 'electron'
+const isProd = process.env.NODE_ENV === 'production'
+import { SonosGroupManager } from './SonosGroupManager'
+import { installExtension, REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 
-let authManager = new AuthManager();
+export let mainWindow: Electron.BrowserWindow | null = null;
+const authManager = new AuthManager();
 const sonosManager = new SonosGroupManager();
 
 if (isProd) {
@@ -24,11 +22,10 @@ if (isProd) {
   await app.whenReady();
 
   installExtension(REACT_DEVELOPER_TOOLS)
-        .then((ext) => console.log(`Added Extension:  ${ext.name}`))
-        .catch((err) => console.log('An error occurred: ', err));
+    .then((ext) => console.log(`Added Extension:  ${ext.name}`))
+    .catch((err) => console.log('An error occurred: ', err));
 
   await authManager.Setup();
-  authManager
   mainWindow = createWindow('main', {
     width: 1000,
     height: 600,

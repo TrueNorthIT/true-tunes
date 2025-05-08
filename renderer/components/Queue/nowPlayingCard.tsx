@@ -1,15 +1,13 @@
 "use client";
-
-import { useSonosActions, useSonosQueue, useSonosState } from "@providers/SonosContext";
-import Image, { StaticImageData } from "next/image";
-import { useEffect, useState } from "react";
-import { Breakpoint, useAsideBreakpoint } from "@providers/AsideBreakpointContext"; // Import the provider
-
-import truenorth_logo from "@public/images/truenorth_logo.png";
-import ImageWithFallback from "@components/ImageWithFallback";
-import { Track } from "@svrooij/sonos/lib/models";
-import { ITrackEntity } from "@components/result-types/trackEntity";
+import React, { useRef } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { StaticImageData } from "next/image";
+import ImageWithFallback from "@components/ImageWithFallback";
+import truenorth_logo from "@public/images/truenorth_logo.png";
+import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
+import { useSonosActions, useSonosQueue } from "@providers/SonosContext";
+import type { ITrackEntity } from "@components/result-types/trackEntity";
 
 export default function NowPlayingCard() {
     const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(truenorth_logo);
@@ -25,13 +23,13 @@ export default function NowPlayingCard() {
 
     useEffect(() => {
         if (queue.queue.length > 0) {
-            const currentTrack = queue.queue[queue.currentTrackIndex-1];
+            const currentTrack = queue.queue[queue.currentTrackIndex - 1];
             console.log("Current Track: ", currentTrack);
             const trackId = currentTrack?.TrackUri.match(/spotify:track:[^?]+/)[0]
 
             actions.getItemMetadata(trackId).then((metadata) => {
                 console.log("Metadata: ", metadata);
-                setAlbumId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.albumId);             
+                setAlbumId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.albumId);
                 setArtistId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.artistId);
             });
 
@@ -46,22 +44,27 @@ export default function NowPlayingCard() {
             setArtistName("TrueNorth");
             setTrackName("TrueNorth Radio");
         }
-    }, [queue]);
+    }, [queue, actions]);
 
     const [isSmall, setIsSmall] = useState(false);
 
     const { registerBreakpoint } = useAsideBreakpoint(); // Access breakpoint context
 
-    let breakpoint: Breakpoint = null;
-    
+    const breakpointRef = useRef(null); 
+
     useEffect(() => {
-        breakpoint = registerBreakpoint(400, setIsSmall);
-        return () => breakpoint.unsubscribe();        
+        breakpointRef.current = registerBreakpoint(400, setIsSmall);
+    
+        return () => {
+            if (breakpointRef.current) {
+                breakpointRef.current.unsubscribe();
+            }
+        };
     }, [registerBreakpoint]);
 
 
     return (
-        <div 
+        <div
             className={"parent flex p-6 bg-gray-800 text-white rounded-lg shadow-lg w-full h-full " + (isSmall ? "flex-col" : "flex-row")}
         >
             {/* Album Art */}

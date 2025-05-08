@@ -1,18 +1,16 @@
 "use client";
-
-import { AuthProvider } from '@components/providers/authProvider';
-// app/layout.tsx
 import '../styles/globals.css';
+import React, { useState } from 'react';
+import Header from '@components/layout/Header';
+import Sidebar from '@components/layout/Sidebar';
+import { AuthProvider } from '@components/providers/authProvider';
 import { AudioProvider } from '@components/providers/SonosContext';
 import { ContextMenuProvider } from '@components/providers/ContextMenuProvider';
-import Sidebar from '@components/layout/Sidebar';
-import Header from '@components/layout/Header';
-import { useState } from 'react';
-import { closestCenter, DndContext } from '@dnd-kit/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-
+    const [queryClient] = React.useState(() => new QueryClient());
     return (
         <html lang="en">
             <head>
@@ -22,21 +20,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 />
             </head>
             <body style={{ overflow: 'hidden', height: '100vh' }} >
-
+            <QueryClientProvider client={queryClient}>
                 <AuthProvider>
-                    <AudioProvider> {/* Wrap the entire layout in AudioProvider */}
+                    <AudioProvider> 
                         <ContextMenuProvider>
-                             
-                                <div>
-                                    <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-                                    <div className="lg:pl-20">
-                                        <Header setSidebarOpen={setSidebarOpen} />
-                                        <main style={{ height: 'calc(100vh - 64px)' }} >{children}</main>
-                                    </div>
+                            <div>
+                                <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                                <div className="lg:pl-20">
+                                    <Header setSidebarOpen={setSidebarOpen} />
+                                    <main style={{ height: 'calc(100vh - 64px)' }} >{children}</main>
                                 </div>
+                            </div>
                         </ContextMenuProvider>
                     </AudioProvider>
                 </AuthProvider>
+                </QueryClientProvider>
             </body>
         </html>
     );

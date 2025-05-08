@@ -1,11 +1,12 @@
 "use client";
 
-// pages/music/index.tsx
-import SearchContainer from '@components/Search/SearchContainer';
-import MusicLayout from './layout';
+import { useSonosState } from "@components/providers/SonosContext";
+import React from "react";
+
 
 const MusicHomePage = () => {
-  return <></>
+  const state = useSonosState();
+  return <pre>{JSON.stringify(state, null, 2)}</pre>
 };
 
 

@@ -1,43 +1,66 @@
-import { Track } from '@svrooij/sonos/lib/models';
-import { createContext, SetStateAction, useContext, useEffect, useState, Dispatch} from 'react';
-import { useSonosActions, useSonosQueue, useSonosState } from './SonosContext';
-
+import type { ReactNode, FC } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import type { Track } from '@svrooij/sonos/lib/models';
+import { useSonosActions, useSonosQueue } from './SonosContext';
 
 interface QueueContextType {
     currentTrackIndex: number;
     queue: Track[];
     followingQueue: boolean;
     setFollowingQueue: (value: boolean) => void;
-    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
+    reorderTracksInQueue: (
+        startingIndex: number,
+        numberOfTracks: number,
+        insertBefore: number
+    ) => void;
+    addToQueue: (trackId: string, insertAfterPosition: number) => void;
 }
 
-const QueueContext = createContext({
-    followingQueue: false,
-    setFollowingQueue: (value: boolean) => { },
-    queue: [],
-    setQueue: (value: Track[]) => { },
+const QueueContext = createContext<QueueContextType>({
     currentTrackIndex: 0,
-    reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => { }
-} as QueueContextType);
+    queue: [],
+    followingQueue: true,
+    setFollowingQueue: () => { },
+    reorderTracksInQueue: () => { },
+    addToQueue: () => { },
+});
 
-export const QueueProvider = ({ children }) => {
+export const QueueProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const sonosQueue = useSonosQueue();
     const sonosActions = useSonosActions();
 
-    const [followingQueue, setFollowingQueue] = useState(true);
+    const [followingQueue, setFollowingQueue] = useState<boolean>(true);
 
-    const reorderTracksInQueue =(startingIndex: number, numberOfTracks: number, insertBefore: number) => {
-        sonosActions.reorderTracksInQueue(startingIndex, numberOfTracks, insertBefore);
-    }
+    const reorderTracksInQueue = (
+        startingIndex: number,
+        numberOfTracks: number,
+        insertBefore: number
+    ) => {
+        sonosActions.reorderTracksInQueue(
+            startingIndex,
+            numberOfTracks,
+            insertBefore
+        );
+    };
 
+    const addToQueue = (trackId: string, insertAfterPosition: number) => {
+        sonosActions.addToQueue(trackId, insertAfterPosition);
+    };
 
     return (
-        <QueueContext.Provider value={{ followingQueue, setFollowingQueue, queue: sonosQueue.queue, reorderTracksInQueue, currentTrackIndex: sonosQueue.currentTrackIndex }}>
+        <QueueContext.Provider
+            value={{
+                currentTrackIndex: sonosQueue.currentTrackIndex,
+                queue: sonosQueue.queue,
+                followingQueue,
+                setFollowingQueue,
+                reorderTracksInQueue,
+                addToQueue,
+            }}
+        >
             {children}
         </QueueContext.Provider>
     );
 };
 
-export const useQueue = () => {
-    return useContext(QueueContext);
-};
+export const useQueue = (): QueueContextType => useContext(QueueContext);

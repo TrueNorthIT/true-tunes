@@ -1,8 +1,7 @@
-import { ArrowTurnLeftDownIcon, ArrowUturnLeftIcon, BackwardIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation'
+import { ArrowUturnLeftIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 
 const SearchBar: React.FC = () => {
     const router = useRouter();
@@ -16,7 +15,7 @@ const SearchBar: React.FC = () => {
             if (!query) router.push(`/music`)
             if (['track', 'album', 'artist'].includes(currentRoute)) {
                 router.push(`/music/search/${currentRoute}/${query}`)
-            }else {
+            } else {
                 router.push(`/music/search/all/${query}`)
             }
 

@@ -1,15 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ITrackEntity } from '@components/result-types/trackEntity';
-import { IArtistEntity } from '@components/result-types/artistEntity';
-import { IAlbumEntity } from '@components/result-types/albumEntity';
-import TrackEntity from '@components/result-types/trackEntity';
-import ArtistEntity from '@components/result-types/artistEntity';
-import AlbumEntity from '@components/result-types/albumEntity';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { DndContext, DragOverlay, useDraggable } from '@dnd-kit/core';
-import { DraggableTrack, SortableTrack } from '@components/Queue/queue';
-
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
+import ArtistEntity from '@components/result-types/artistEntity';
+import { DraggableTrack, type ITrackEntity } from '@components/result-types/trackEntity';
+import { DraggableAlbum, type IAlbumEntity } from '@components/result-types/albumEntity';
+import type { IArtistEntity } from '@components/result-types/artistEntity';
 interface SearchResultsProps {
     term: string;
     trackResults: ITrackEntity[];
@@ -75,12 +70,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                             <DraggableTrack
                                 key={`search-${track.id}`}
                                 id={`search-${track.id}`}
-                                track={track}
+                                entity={track}
                                 small={false}
                                 playing={false}
                                 index={index}
-                                selected={false}
-                                hideAlbumArt={false}
+                                isSelected={false}
+                                showImage={true}
                                 onSelect={() => { }}
                             ></DraggableTrack>
                         ))}
@@ -116,7 +111,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     </h2>
                     <div className="grid grid-cols-6 gap-4">
                         {albumResults.map((album) => (
-                            <AlbumEntity key={album.id} entity={album} onSelect={() => router.push(`/music/view/album/${album.id}`)} />
+                            <DraggableAlbum id={`search-album-${album.id}`} key={album.id} entity={album} onSelect={() => router.push(`/music/view/album/${album.id}`)} />
                         ))}
                     </div>
                 </section>

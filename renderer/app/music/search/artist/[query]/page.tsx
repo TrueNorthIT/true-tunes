@@ -1,11 +1,12 @@
 "use client";
-
-import { useEffect, useState, useCallback } from "react";
+import React from "react";
 import { Services } from "@enums/Services";
-import { SonosSearchTypes } from "@enums/SonosSearchType";
-import { useSonosActions } from "@components/providers/SonosContext";
 import { useRouter } from "next/navigation";
-import ArtistEntity, { IArtistEntity } from "@components/result-types/artistEntity";
+import { useEffect, useState, useCallback } from "react";
+import { SonosSearchTypes } from "@enums/SonosSearchType";
+import ArtistEntity from "@components/result-types/artistEntity";
+import { useSonosActions } from "@components/providers/SonosContext";
+import type { IArtistEntity } from "@components/result-types/artistEntity";
 
 export default function Page({ params }: { params: { query: string } }) {
     const { query } = params;
@@ -113,9 +114,9 @@ export default function Page({ params }: { params: { query: string } }) {
 function ArtitstPlaceholder() {
     return (
         <li className="relative hover:underline underline-offset-2 list-none p-14">
-        <div className="group aspect-square rounded-full aspect-w-10 block w-full overflow-hidden  focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
-        <div className="aspect-square rounded bg-gray-800 animate-pulse" />
-        </div>
-    </li>
+            <div className="group aspect-square rounded-full aspect-w-10 block w-full overflow-hidden  focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
+                <div className="aspect-square rounded bg-gray-800 animate-pulse" />
+            </div>
+        </li>
     );
 }

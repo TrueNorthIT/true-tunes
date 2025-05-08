@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import AlbumEntity, { IAlbumEntity } from "@components/result-types/albumEntity";
+import React from 'react';
 import { Services } from "@enums/Services";
-import { SonosSearchTypes } from "@enums/SonosSearchType";
-import { useSonosActions } from "@components/providers/SonosContext";
 import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { SonosSearchTypes } from "@enums/SonosSearchType";
+import AlbumEntity from "@components/result-types/albumEntity";
+import { useSonosActions } from "@components/providers/SonosContext";
+import type { IAlbumEntity } from "@components/result-types/albumEntity";
 
 export default function Page({ params }: { params: { query: string } }) {
     const { query } = params;

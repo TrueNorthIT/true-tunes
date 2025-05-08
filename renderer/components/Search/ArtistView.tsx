@@ -1,25 +1,18 @@
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import AlbumEntity, { IAlbumEntity } from '@components/result-types/albumEntity';
-import { ITrackEntity } from '@components/result-types/trackEntity';
 import { useSonosActions } from '@providers/SonosContext';
 import { ipcService } from '@components/providers/ipcService';
-import { IArtistEntity } from '@components/result-types/artistEntity';
-import { ArtistDetails } from '../../../main/MusicAPIService';
-import SearchTrack from './SearchTrack';
 import ImageWithFallback from '@components/ImageWithFallback';
+import type { ArtistDetails } from '../../../main/MusicAPIService';
 import missing_album_art from '@public/images/missing_album_art.png';
-import { useRouter } from 'next/navigation';
+import { DraggableAlbum, type IAlbumEntity } from '@components/result-types/albumEntity';
+import { DraggableTrack, type ITrackEntity } from '@components/result-types/trackEntity';
+import type { IArtistEntity } from '@components/result-types/artistEntity';
 
 interface ArtistViewProps {
     artist: IArtistEntity;
     onBack?: (album?: IAlbumEntity) => void;
 }
-
-const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
 
 const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
     const player = useSonosActions();
@@ -36,7 +29,7 @@ const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
 
         player.getMetadata(artist.id).then((result) => {
             console.log('Artist! Metadata:', result);
-            const albums = result?.mediaCollection?.filter(a => a.itemType === 'album')  as IAlbumEntity[] || [];
+            const albums = result?.mediaCollection?.filter(a => a.itemType === 'album') as IAlbumEntity[] || [];
             const topTracks = result?.mediaCollection?.filter(a => a.itemType === "trackList")?.[0] || null;
 
             if (topTracks) {
@@ -51,7 +44,7 @@ const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
 
 
         });
-    }, [artist]);
+    }, [artist, player]);
 
     return (
         <div className="w-full">
@@ -75,7 +68,7 @@ const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
                         backgroundImage: `url(${artistDetail?.art?.background})`,
                         backgroundSize: '100% auto', // Scale proportionally to width
                         backgroundPosition: 'center',
-                        filter: 'blur(20px)',          
+                        filter: 'blur(20px)',
                     }}
                 />
 
@@ -120,21 +113,26 @@ const ArtistView: React.FC<ArtistViewProps> = ({ artist, onBack }) => {
                 )}
                 <h2 className="text-xl font-semibold mb-4">Top Tracks</h2>
                 <div className="grid grid-cols-2  @[1000px]:grid-cols-3 @[1300px]:grid-cols-4 gap-2">
-                                {topTracks.map((track) => (
-                                    <SearchTrack
-                                        key={track.id}
-                                        entity={track}
-                                        small={false}
-                                        showImage={true}
-                                        // onAlbumClick={(album) => onBack?.(album)}
-                                    />
-                                ))}
-                            </div>
+                    {topTracks.map((track, index) => (
+                        <DraggableTrack
+                            key={`search-${track.id}`}
+                            id={`search-${track.id}`}
+                            entity={track}
+                            small={false}
+                            playing={false}
+                            index={index}
+                            isSelected={false}
+                            showImage={true}
+                            onSelect={() => { }}
+                        ></DraggableTrack>
+    
+                    ))}
+                </div>
 
                 <h2 className="text-xl font-semibold mb-4">Albums</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-12 gap-4">
                     {albums.map((album) => (
-                        <AlbumEntity key={album.id} entity={album} onSelect={() => router.push(`/music/view/album/${album.id}`)} />
+                        <DraggableAlbum id={`search-album-${album.id}`} key={album.id} entity={album} onSelect={() => router.push(`/music/view/album/${album.id}`)} />
                     ))}
                 </div>
             </div>

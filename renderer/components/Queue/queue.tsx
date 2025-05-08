@@ -1,19 +1,21 @@
 "use client";
 
 import { createRef, useRef, useState, useCallback, useEffect } from "react";
-import { DndContext, closestCenter, DragOverlay, useDraggable, useDndMonitor, UniqueIdentifier, useDndContext } from "@dnd-kit/core";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { DragOverlay, useDndMonitor, useDndContext } from "@dnd-kit/core";
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useQueue } from "@providers/QueueProvider";
 import { useScrollToCurrentTrack } from "@components/Queue/useScrollToCurrentTrack";
 import { useHandleManualScroll } from "@components/Queue/useHandleManualScroll";
 import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
+import type { TrackEntityProps } from "@components/result-types/trackEntity";
 import TrackEntity from "@components/result-types/trackEntity";
 import Seperator from "@components/Seperator";
 import { CSS } from "@dnd-kit/utilities";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
-import { createPortal } from 'react-dom';
 import React from "react";
 import { useSonosActions } from "@components/providers/SonosContext";
+import type { Track } from "@svrooij/sonos/lib/models";
 export default function Queue() {
     const queue = useQueue();
     const actions = useSonosActions();
@@ -21,7 +23,6 @@ export default function Queue() {
     const queueContainerRef = useRef<HTMLDivElement>(null);
 
     const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState(queue.currentTrackIndex);
-    const [activeId, setActiveId] = useState<string | null>(null);
     const [isSmall, setIsSmall] = useState(false);
     const [hideAlbumArt, setHideAlbumArt] = useState(false);
     const [selectedTracks, setSelectedTracks] = useState<number[]>([]);
@@ -43,7 +44,7 @@ export default function Queue() {
             }
 
             const overRect = over.rect;
-            const activeRect = active.rect.current.translated; // Live moving rect!
+            const activeRect = active.rect.current.translated;
 
             if (!activeRect) {
                 setOverId(null);
@@ -51,55 +52,42 @@ export default function Queue() {
             }
 
             const activeLeft = activeRect.left;
-
-            const isWithinX =
-                activeLeft >= overRect.left &&
-                activeLeft <= overRect.left + overRect.width;
-
+            const activeRight = activeRect.right;
+            const isWithinXLeft = activeLeft <= overRect.right
+            const isWithinXRight = activeRight <= overRect.right;
 
 
-            if (active.id.toString().startsWith("search") && isWithinX) {
+            if (active.id.toString().startsWith("search") && (isWithinXLeft || isWithinXRight)) {
                 setOverId(over.id);
             } else {
                 setOverId(null);
             }
         },
 
-
-
-        onDragStart(event: any) {
-            setActiveId(event.active.id);
-
-        },
-
-        onDragEnd(event: any) {
-            setOverId(null);
+        onDragEnd(event) {
 
             const { active, over } = event;
+            if (active.id.toString().startsWith("search") && !overId) return
+            setOverId(null);
             if (!over || active.id === over.id) {
-                setActiveId(null);
                 return;
             }
 
+            console.log("We got a dropper!: ", active.id, over.id)
+
             if (active.id.toString().startsWith("search")) {
                 const overRect = over.rect;
-                const activeRect = active.rect.current.translated; // Live moving rect!
+                const activeRect = active.rect.current.translated;
 
+                const isWithinXLeft = overRect.left <= activeRect.right
+                const isWithinXRight = overRect.right <= activeRect.right;
 
-                const activeLeft = activeRect.left;
-
-                const isWithinX =
-                    activeLeft >= overRect.left &&
-                    activeLeft <= overRect.left + overRect.width;
-
-                if (!isWithinX) return
-                    
+                if (!(isWithinXLeft || isWithinXRight)) return
 
                 // Optimistic update
                 const newQueue = [...optimisticQueue];
                 const newTrack = active.data.current;
-                const newTrackId = active.data.current.id;
-                const newTrackIndex = parseInt(over.id);
+                const newTrackIndex = parseInt(over.id.toString());
                 const newTrackUri = active.data.current.trackMetadata?.trackUri || active.data.current.uri;
                 const newTrackObj = {
                     ...newTrack,
@@ -109,21 +97,24 @@ export default function Queue() {
                         trackUri: newTrackUri,
                     },
                 };
-                newQueue.splice(newTrackIndex, 0, newTrackObj);
-                setOptimisticQueue(newQueue);
 
-                actions.addToQueue(active.data.current.id, Number.parseInt(over.id)+1);
+                newQueue.splice(newTrackIndex, 0, newTrackObj as Track);
+
+                setOptimisticQueue(newQueue);
+                actions.addToQueue(active.data.current.id, Number.parseInt(over.id.toString()) + 1);
+
             }
+
             else {
 
-
-                const oldIndex = parseInt(active.id);
-                const newIndex = parseInt(over.id);
-
+                const oldIndex = parseInt(active.id.toString());
+                const newIndex = parseInt(over.id.toString());
                 moveTracks(oldIndex, newIndex);
-                setActiveId(null);
+
             }
+
         }
+
     });
 
 
@@ -141,6 +132,21 @@ export default function Queue() {
     useEffect(() => {
         setCurrentlyPlayingIndex(queue.currentTrackIndex - 1);
     }, [queue.currentTrackIndex]);
+
+
+
+    const isProgrammaticScrollRef = useScrollToCurrentTrack(
+        currentlyPlayingIndex,
+        trackRefs,
+        queueContainerRef,
+        queue,
+        isSmall
+    );
+
+
+
+    useHandleManualScroll(queueContainerRef, queue, isProgrammaticScrollRef);
+
 
     useEffect(() => {
         setOptimisticQueue(queue.queue);
@@ -189,7 +195,7 @@ export default function Queue() {
                 strategy={verticalListSortingStrategy}
             >
 
-                {items.map((id, idx) => {
+                {items.map((id) => {
                     const index = parseInt(id);
                     const track = optimisticQueue[index];
 
@@ -198,7 +204,7 @@ export default function Queue() {
                     return (
                         <React.Fragment key={id}>
                             {isOver && (
-                                <>
+                                <div className="bg-gray-600">
                                     <TrackEntity
                                         entity={active.data.current}
                                         playing={false}
@@ -209,22 +215,39 @@ export default function Queue() {
                                     />
                                     <Seperator />
 
-                                </>
+                                </div>
                             )}
 
                             <SortableTrack
+                                ref={trackRefs.current[index]}
                                 id={id}
                                 index={index}
-                                track={track}
-                                selected={selectedTracks.includes(index)}
+                                entity={track}
+                                isSelected={selectedTracks.includes(index)}
                                 playing={currentlyPlayingIndex === index}
                                 small={isSmall}
-                                hideAlbumArt={hideAlbumArt}
+                                showImage={!hideAlbumArt}
                                 onSelect={handleTrackSelect}
                             />
                         </React.Fragment>
                     );
                 })}
+
+                <DragOverlay modifiers={[snapCenterToCursor]} >
+                    {
+                        !overId ? <div className="p-2 bg-neutral-800 rounded" style={{ width: queueContainerRef.current?.clientWidth }}>
+                            <TrackEntity
+                                entity={active?.data?.current}
+                                playing={false}
+                                small={false}
+                                index={-1}
+                                showImage={true}
+                                isSelected={false}
+                            />
+                        </div> : <></>
+                    }
+
+                </DragOverlay>
 
             </SortableContext>
         </div>
@@ -234,44 +257,33 @@ export default function Queue() {
 
 // ---
 
-export function SortableTrack({ id, index, track, selected, playing, small, hideAlbumArt, onSelect }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id });
+const SortableTrack = React.forwardRef<HTMLDivElement, TrackEntityProps & { id: UniqueIdentifier, onSelect: (index: number, e: React.MouseEvent) => void }>(
+    ({ id, index, entity, isSelected, playing, small, showImage, onSelect }, ref) => {
+        const {
+            attributes,
+            listeners,
+            setNodeRef,
+            transform,
+            transition,
+            isDragging,
+        } = useSortable({ id, data: entity });
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0 : 1,
-    };
+        const style = {
+            transform: CSS.Transform.toString(transform),
+            transition,
+            opacity: isDragging ? 0 : 1,
+        };
 
+        const combinedRef = useCallback((node: HTMLDivElement | null) => {
+            setNodeRef(node);
+            if (ref && typeof ref === 'object') {
+                ref.current = node;
+            }
+        }, [setNodeRef, ref]);
 
-    return (
-        <>
-
-            {isDragging && (
-
-                <DragOverlay>
-                    <div className="p-2 bg-neutral-800 rounded">
-                        <TrackEntity
-                            entity={track}
-                            playing={playing}
-                            small={small}
-                            index={index}
-                            showImage={!hideAlbumArt}
-                            isSelected={selected}
-                        />
-                    </div>
-                </DragOverlay>
-            )}
-
+        return (
             <div
-                ref={setNodeRef}
+                ref={combinedRef}
                 style={style}
                 className="grow"
                 onClick={(e) => onSelect(index, e)}
@@ -279,72 +291,16 @@ export function SortableTrack({ id, index, track, selected, playing, small, hide
                 {...listeners}
             >
                 <TrackEntity
-                    entity={track}
+                    entity={entity}
                     playing={playing}
                     small={small}
                     index={index}
-                    showImage={!hideAlbumArt}
-                    isSelected={selected}
+                    showImage={showImage}
+                    isSelected={isSelected}
                 />
                 <Seperator />
             </div>
-        </>
-    );
-}
-
-export function DraggableTrack({ id, index, track, selected, playing, small, hideAlbumArt, onSelect }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        isDragging,
-    } = useDraggable({ id, data: track });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        opacity: isDragging ? 0 : 1,
-        zIndex: isDragging ? 1000 : 1,
-    };
-
-    return (
-        <>
-        {isDragging &&     createPortal(
-            <DragOverlay modifiers={[snapCenterToCursor]}>
-                <div className="p-2 bg-neutral-800 rounded">
-                    <TrackEntity
-                        entity={track}
-                        playing={playing}
-                        small={small}
-                        index={index}
-                        showImage={!hideAlbumArt}
-                        isSelected={selected}
-                    />
-                </div>
-            </DragOverlay>,
-            document.body)}
-        
-
-        
-        <div
-            ref={setNodeRef}
-            style={style}
-            className="grow"
-            onClick={(e) => onSelect(index, e)}
-            {...attributes}
-            {...listeners}
-        >
-            <TrackEntity
-                entity={track}
-                playing={playing}
-                small={small}
-                index={index}
-                showImage={!hideAlbumArt}
-                isSelected={selected}
-            />
-            {/* <Seperator /> */}
-        </div>
-        </>
-
-    );
-}
+        );
+    }
+);
+SortableTrack.displayName = 'SortableTrack';

@@ -1,8 +1,9 @@
+import type {
+  BrowserWindowConstructorOptions,
+  Rectangle} from 'electron';
 import {
   screen,
-  BrowserWindow,
-  BrowserWindowConstructorOptions,
-  Rectangle,
+  BrowserWindow
 } from 'electron'
 import Store from 'electron-store'
 

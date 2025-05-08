@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useState } from "react";
 
 
@@ -9,7 +10,7 @@ export const TimeString: React.FC<{ date: string }> = ({ date }) => {
         if (!date) {
             setFormattedString(" ")
         }
-        
+
         // date is in form H:MM:SS
         // Chop off the hours if it's 0: 
 
@@ -18,8 +19,8 @@ export const TimeString: React.FC<{ date: string }> = ({ date }) => {
             formatted = date.slice(2);
         }
         setFormattedString(formatted);
-        
-        
+
+
     }, [date]);
 
     return (

@@ -1,3 +1,5 @@
+import React from "react";
+
 const Seperator: React.FC<{ text?: string }> = (props) => {
     return (
         <div className="relative flex items-center">

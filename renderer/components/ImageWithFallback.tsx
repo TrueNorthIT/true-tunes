@@ -1,8 +1,8 @@
-import { ImageLoader, ImageProps, OnLoadingComplete, PlaceholderValue, StaticImport } from "next/dist/shared/lib/get-img-props";
+import React from "react";
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import missing_album_art from '@public/images/missing_album_art.png';
-
+import type { ImageProps, StaticImport } from "next/dist/shared/lib/get-img-props";
 
 type ImageWithFallbackProps = Omit<ImageProps, "src" | "alt"> & {
     src: string | StaticImport;
@@ -14,7 +14,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ fallback, alt, sr
     const fallbackSrc = fallback ?? missing_album_art.src;
     const [imageSrc, setImageSrc] = useState<string | StaticImport>(src);
     const [hasError, setHasError] = useState(false);
-    
+
     useEffect(() => {
         setImageSrc(src ?? fallbackSrc);
         setHasError(false);

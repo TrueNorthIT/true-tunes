@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthenticationResult } from '@azure/msal-node';
 
 interface AuthContextProps {
     userDetails: UserDetails | null;

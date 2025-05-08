@@ -1,8 +1,6 @@
-import { BrowseResponse, Track } from "@svrooij/sonos/lib/models";
-import { SonosState } from "@svrooij/sonos/lib/models/sonos-state";
-import { MediaList } from "@svrooij/sonos/lib/musicservices/smapi-client";
-import  { SonosGroupManager }  from "../../../main/SonosGroupManager";
-import { ArtistDetails } from "../../../main/MusicAPIService";
+import type { Track } from "@svrooij/sonos/lib/models";
+import type  { SonosGroupManager }  from "../../../main/SonosGroupManager";
+import type { ArtistDetails } from "../../../main/MusicAPIService";
 
 export const ipcService = {
     connect: (groupName: string): Promise<string> => {

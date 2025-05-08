@@ -1,15 +1,13 @@
+import { Services } from '@enums/Services';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { IAlbumEntity } from '@components/result-types/albumEntity';
-import { ITrackEntity } from '@components/result-types/trackEntity';
+import { SonosSearchTypes } from '@enums/SonosSearchType';
 import { useSonosActions, } from '@providers/SonosContext';
 import { ipcService } from '@components/providers/ipcService';
-import { IArtistEntity } from '@components/result-types/artistEntity';
-import { Services } from '@enums/Services';
-import { SonosSearchTypes } from '@enums/SonosSearchType';
-import { on } from 'events';
-import Image from 'next/image';
 import ImageWithFallback from '@components/ImageWithFallback';
-import { useRouter } from 'next/navigation';
+import type { IAlbumEntity } from '@components/result-types/albumEntity';
+import { DraggableTrack, type ITrackEntity } from '@components/result-types/trackEntity';
+import type { IArtistEntity } from '@components/result-types/artistEntity';
 
 interface AlbumViewProps {
     album: IAlbumEntity;
@@ -58,14 +56,6 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
                 setGenres([]);
             });
     }, [album]);
-
-    const openArtist = async (artistName: string, artistId: string) => {
-        const result = await player.search(artistName, SonosSearchTypes.Artist, Services.Spotify, 100);
-        const foundArtist = result?.mediaCollection?.find((artist: IArtistEntity) => artist.id === artistId);
-        console.log('Artist result:', foundArtist);
-        if (foundArtist && onBack) onBack(foundArtist);
-    }
-
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -142,37 +132,25 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
 
                 {loading ? (
                     <p className="text-gray-400">Loading tracks...</p>
-                ) : (
-                    <table className="w-full text-left border-separate border-spacing-y-2">
-                        <thead>
-                            <tr className="text-gray-400 text-sm">
-                                <th className="w-12 px-2">#</th>
-                                <th>Title</th>
-                                <th className="w-24 text-right">Duration</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tracks.map((track) => (
-                                <tr key={track.id} className="bg-gray-800 hover:bg-gray-700 rounded-md text-white text-sm">
-                                    <td className="px-2 align-middle">{track.trackMetadata?.trackNumber}</td>
-                                    <td className="py-2">
-                                        <div className="flex items-center gap-2">
-                                            <span>{track.title}</span>
-                                            {track.tags?.explicit ? (
-                                                <span className="text-xs bg-[#f85f5fce] text-white px-1.5 py-0.5 rounded-md">
-                                                    EXPLICIT
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                    </td>
-                                    <td className="text-right pr-2 align-middle">
-                                        {formatDuration(track.trackMetadata?.duration ?? 0)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                ) : 
+                    tracks.map((track) => (
+
+                        <DraggableTrack
+                            entity={track}
+                            isSearchResult={true}
+                            isSelected={false}
+                            key={track.id}
+                            showImage={false}
+                            playing={false}
+                            small={true}
+                            id={`search-${track.id}`}
+                            onSelect={() => {}}
+                        
+                        
+                        />
+
+                    ))}
+            
             </div>
         </div>
     );

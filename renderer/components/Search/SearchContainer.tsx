@@ -1,16 +1,11 @@
-// SearchContainer.tsx
-import { useAsideBreakpoint } from "@components/providers/AsideBreakpointContext";
+import React from 'react';
+import type { ReactNode } from "react";
 import SearchBar from "@components/Search/SearchBar";
-import SearchResults from "@components/Search/SearchResults";
-import { ReactNode, useState } from "react";
-import { SonosSearchTypes } from "@enums/SonosSearchType";
-import { ITrackEntity } from "@components/result-types/trackEntity";
-import { IArtistEntity } from "@components/result-types/artistEntity";
-import { IAlbumEntity } from "@components/result-types/albumEntity";
+import { useAsideBreakpoint } from "@components/providers/AsideBreakpointContext";
 
 const SearchContainer = ({ children }: { children: ReactNode }) => {
     const { mainRef, handleRef } = useAsideBreakpoint();
-  
+
 
     return (
         <main className="flex flex-col h-full min-h-0 px-4 py-10 sm:px-6 lg:px-8 lg:py-6 relative w-full" ref={mainRef}>

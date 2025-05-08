@@ -1,12 +1,14 @@
-import { Track } from '@svrooij/sonos/lib/models';
-import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import type { Track } from '@svrooij/sonos/lib/models';
+import type { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import { useEffect, useState } from 'react';
 import ImageWithFallback from '@components/ImageWithFallback';
 import missing_album_art from '@public/images/missing_album_art.png';
 import { useContextMenuManager } from '@providers/ContextMenuProvider';
 import { useSonosActions } from '@components/providers/SonosContext';
 import React from 'react';
-
+import { CSS } from "@dnd-kit/utilities";
+import type { UniqueIdentifier } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
 export interface ITrackEntity extends MediaItem {
     trackMetadata: {
         albumArtURI: string;
@@ -22,16 +24,19 @@ export interface ITrackEntity extends MediaItem {
     }
 }
 
-const TrackEntity: React.FC<{
-    entity: ITrackEntity | Track,
+export interface TrackEntityProps {
+    entity: ITrackEntity,
     playing: boolean,
     index?: number,
     small: boolean,
     showImage?: boolean,
     isSelected?: boolean,
     isSearchResult?: boolean,
+    providedRef?: React.RefObject<HTMLDivElement>,
     onSelectChange?: (isSelected: boolean) => void
-}> = (props) => {
+}
+
+const TrackEntity: React.FC<TrackEntityProps> = (props) => {
     const player = useSonosActions();
 
     const { handleContextMenu } = useContextMenuManager();
@@ -39,7 +44,12 @@ const TrackEntity: React.FC<{
     const [track, setTrack] = useState<Track>();
     const [showAlbumArt, setShowAlbumArt] = useState(true);
 
-
+    const formatDuration = (seconds: number) => {
+        if (!seconds) return undefined;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
 
     useEffect(() => {
         if (props.showImage !== null) setShowAlbumArt(props.showImage);
@@ -74,6 +84,7 @@ const TrackEntity: React.FC<{
     const searchContextMenuOptions = [
         {
             label: 'Play Now', onClick: async () => {
+                console.log('Play Now clicked ', track?.TrackUri);
                 await player.playNext(track?.TrackUri);
                 player.next();
 
@@ -84,8 +95,14 @@ const TrackEntity: React.FC<{
     ];
 
     const contextMenuOptions = [
-        { label: 'Play Now', onClick: () => player.jumpToPointInQueue(props.index) },
-        { label: 'Remove from Queue', onClick: () => player.removeFromQueue(props.index+1) },
+        {
+            label: 'Play Now', onClick: () => {
+                console.log('Play Now clicked ', track?.TrackUri);
+                console.log("jumpin")
+                player.jumpToPointInQueue(props.index)
+            }
+        },
+        { label: 'Remove from Queue', onClick: () => player.removeFromQueue(props.index + 1) },
         { label: 'Show Details', onClick: () => console.log('Show Details clicked') },
     ];
 
@@ -139,7 +156,16 @@ const TrackEntity: React.FC<{
             )}
 
             <div className='parent relative ml-4'>
-                <h2 className="text-lg font-semibold">{track?.Title}</h2>
+                <h2 className="text-lg font-semibold">
+                    <span>{track?.Title}</span>
+                    {
+                        props.entity?.tags?.explicit ? <span className="text-white text-xs ml-4 bg-red-800 px-2 pb-2 border-x-red-700 br-r-4" title="Explicit Content">
+                            Explicit
+                        </span>
+                            : null
+                    }
+
+                </h2>
                 <div className='flex max-h-6'>
                     <h3 className='text-gray-400' title={`${track?.Artist} - ${track?.Album}`}>
                         {track?.Artist} &nbsp;-&nbsp; <b className='font-semibold'>{track?.Album}</b>
@@ -150,6 +176,8 @@ const TrackEntity: React.FC<{
                     </div>
                 )}
             </div>
+
+            <span className='ml-auto'>{formatDuration(props.entity.trackMetadata?.duration)}</span>
             <input
                 type="checkbox"
                 checked={props.isSelected}
@@ -162,6 +190,47 @@ const TrackEntity: React.FC<{
         </div>
     );
 };
+
+export function DraggableTrack({ id, index, entity, isSelected, playing, small, showImage, onSelect }: TrackEntityProps & { id: UniqueIdentifier, onSelect: (index: number, e: React.MouseEvent) => void }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        isDragging,
+    } = useDraggable({ id, data: entity });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        opacity: isDragging ? 0 : 1,
+        zIndex: isDragging ? 1000 : 1,
+    };
+
+    return (
+
+
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="grow"
+            onClick={(e) => onSelect(index, e)}
+            {...attributes}
+            {...listeners}
+        >
+            <TrackEntity
+                entity={entity}
+                playing={playing}
+                small={small}
+                index={index}
+                showImage={showImage}
+                isSelected={isSelected}
+            />
+        </div>
+
+    );
+}
+
+
 
 
 export default React.memo(TrackEntity);

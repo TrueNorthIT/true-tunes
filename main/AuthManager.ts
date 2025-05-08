@@ -1,7 +1,8 @@
 import path from "path";
 import * as msal from '@azure/msal-node'
 
-import { DataProtectionScope, Environment, PersistenceCreator, PersistenceCachePlugin, IPersistenceConfiguration } from "@azure/msal-node-extensions";
+import type { IPersistenceConfiguration } from "@azure/msal-node-extensions";
+import { DataProtectionScope, Environment, PersistenceCreator, PersistenceCachePlugin } from "@azure/msal-node-extensions";
 import { msalConfig } from '../renderer/msalConfig'
 import { shell } from "electron";
 import axios from "axios";

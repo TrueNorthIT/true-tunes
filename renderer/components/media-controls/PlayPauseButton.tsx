@@ -1,18 +1,19 @@
 "use client";
 
-import { PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
-import { useSonosActions, useSonosState } from "../providers/SonosContext";
+import React from "react";
 import { useEffect, useState } from "react";
+import { useSonosActions, useSonosState } from "../providers/SonosContext";
+import { PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
 
 export default function PlayButton() {
     const player = useSonosActions();
-    const state = useSonosState(); 
+    const state = useSonosState();
     const [isPlaying, setIsPlaying] = useState(false);
 
     useEffect(() => {
         setIsPlaying(state.playbackState?.transportState === "PLAYING");
     }, [state.playbackState?.transportState]);
-    
+
     return (
         <button
             type="button"

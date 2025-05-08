@@ -1,25 +1,31 @@
 "use client";
 
+import React, { useRef } from 'react';
 import { useEffect, useState } from "react";
-
-import { ArrowTrendingDownIcon } from "@heroicons/react/24/solid";
 import { useQueue } from "@providers/QueueProvider";
-import { Breakpoint, useAsideBreakpoint } from "@components/providers/AsideBreakpointContext";
+import { ArrowTrendingDownIcon } from "@heroicons/react/24/solid";
+import { useAsideBreakpoint } from "@components/providers/AsideBreakpointContext";
 
 
 const QueueHeader = () => {
 
   const queueDetails = useQueue();
 
-  
-  const [isSmall, setIsSmall] = useState(false);
-  const { registerBreakpoint } = useAsideBreakpoint(); 
-  let breakpoint: Breakpoint = null;  
-  useEffect(() => {
-      breakpoint = registerBreakpoint(400, setIsSmall);
-      return () => breakpoint.unsubscribe();        
-  }, [registerBreakpoint]);
 
+  const [isSmall, setIsSmall] = useState(false);
+  const { registerBreakpoint } = useAsideBreakpoint();
+
+  const breakpointRef = useRef(null); // 👈 Create a ref
+
+  useEffect(() => {
+      breakpointRef.current = registerBreakpoint(400, setIsSmall);
+
+      return () => {
+          if (breakpointRef.current) {
+              breakpointRef.current.unsubscribe();
+          }
+      };
+  }, [registerBreakpoint]);
 
   return (
 

@@ -303,14 +303,16 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
         },
 
         fullFatSearch: async (searchTerm, service) => {
-            const key = `${searchTerm}|${service}`;
+            const cleanQuery = decodeURI(searchTerm);
+
+            const key = `${cleanQuery}|${service}`;
             if (fullFatSearchCache.has(key)) {
                 return fullFatSearchCache.get(key)!;
             }
             const result: fullFatSearchResult = {
-                track: await sonos.Search(searchTerm, SonosSearchTypes.Track, service, 32),
-                album: await sonos.Search(searchTerm, SonosSearchTypes.Album, service, 12),
-                artist: await sonos.Search(searchTerm, SonosSearchTypes.Artist, service, 20)
+                track: await sonos.Search(cleanQuery, SonosSearchTypes.Track, service, 32),
+                album: await sonos.Search(cleanQuery, SonosSearchTypes.Album, service, 12),
+                artist: await sonos.Search(cleanQuery, SonosSearchTypes.Artist, service, 20)
             };
             fullFatSearchCache.set(key, result);
             return result;

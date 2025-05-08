@@ -1,12 +1,12 @@
 "use client";
-
-import { useEffect, useState, useCallback } from "react";
-import { Services } from "@enums/Services";
-import { SonosSearchTypes } from "@enums/SonosSearchType";
-import { useSonosActions } from "@components/providers/SonosContext";
-import { ITrackEntity } from "@components/result-types/trackEntity";
-import ImageWithFallback from "@components/ImageWithFallback";
+import React from "react";
 import Link from "next/link";
+import { Services } from "@enums/Services";
+import { useEffect, useState, useCallback } from "react";
+import { SonosSearchTypes } from "@enums/SonosSearchType";
+import ImageWithFallback from "@components/ImageWithFallback";
+import { useSonosActions } from "@components/providers/SonosContext";
+import type { ITrackEntity } from "@components/result-types/trackEntity";
 
 const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -55,7 +55,7 @@ export default function Page({ params }: { params: { query: string } }) {
             setOffset(filteredTracks.length); // Offset is just number of loaded items
         }
         setLoading(false);
-    }, [query, offset, player, pageSize, loading]);
+    }, [query, offset, player, pageSize, loading, searchResults]);
 
     // Reset state on query change
     useEffect(() => {
@@ -64,7 +64,7 @@ export default function Page({ params }: { params: { query: string } }) {
         if (query) {
             fetchTracks();
         }
-    }, [query]);
+    }, [query, fetchTracks]);
 
     // Scroll listener
     useEffect(() => {

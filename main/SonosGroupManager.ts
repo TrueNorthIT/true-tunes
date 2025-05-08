@@ -1,8 +1,8 @@
-import { SonosDevice, SonosDeviceDiscovery, SonosEvents, SonosManager } from '@svrooij/sonos'
-import { ipcMain, shell, webContents } from 'electron';
+import type { SonosDevice} from '@svrooij/sonos';
+import { SonosEvents, SonosManager } from '@svrooij/sonos'
 import { mainWindow } from './background';
-import { Track } from '@svrooij/sonos/lib/models';
-import { Services } from '../renderer/enums/Services';
+import type { Track } from '@svrooij/sonos/lib/models';
+import type { Services } from '../renderer/enums/Services';
 
 enum SonosService {
     Spotify = 9
@@ -58,14 +58,14 @@ class SonosGroupManager {
     }
 
     public async Connect(groupName?: string) {
-        try {
-            const connected = await this.manager.InitializeWithDiscovery(20);
-            if (!connected) {
-                throw new Error('No Sonos devices found');
-            }
-        }catch(e) {
-            await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.10');
-        }
+        // try {
+        //     const connected = await this.manager.InitializeWithDiscovery(20);
+        //     if (!connected) {
+        //         throw new Error('No Sonos devices found');
+        //     }
+        // }catch(e) {
+        await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.10');
+        // }
         
         if (groupName) this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
         else this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
@@ -124,7 +124,7 @@ class SonosGroupManager {
     public async GetMetadata(service: Services, id: string) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
-            const result = await musicService.GetMetadata({ id, index: 0, count: 15, recursive: true });
+            const result = await musicService.GetMetadata({ id, index: 0, count: 150, recursive: true });
             return result;
         }
     }

@@ -1,8 +1,9 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
-import { SpeakerWaveIcon, SpeakerXMarkIcon } from "@heroicons/react/24/solid";
 import { useSonosActions } from "../providers/SonosContext";
+import { SpeakerWaveIcon, SpeakerXMarkIcon } from "@heroicons/react/24/solid";
 
 export default function MuteButton() {
     const player = useSonosActions();

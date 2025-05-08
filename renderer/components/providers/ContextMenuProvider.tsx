@@ -1,12 +1,12 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React from "react";
 import ContextMenu from '../ContextMenu';
-
+import { createContext, useContext, useState, useEffect } from 'react';
 // Create a context for managing the context menu state
 const ContextMenuManagerContext = createContext({
     currentMenu: null,
-    setCurrentMenu: (menuId: string | null) => {},
-    handleContextMenu: (event, options, onClose) => {},
-    closeContextMenu: () => {},
+    setCurrentMenu: (menuId: string | null) => { },
+    handleContextMenu: (event, options, onClose) => { },
+    closeContextMenu: () => { },
 });
 
 export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -17,7 +17,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [onCloseCallback, setOnCloseCallback] = useState(null);
 
     const handleContextMenu = (event, options, onClose) => {
-        onCloseCallback && onCloseCallback();
+        if (onCloseCallback) onCloseCallback();
         event.preventDefault();
         setContextMenuPosition({ x: event.clientX, y: event.clientY });
         setContextMenuOptions(options);
@@ -28,9 +28,8 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const closeContextMenu = () => {
         setContextMenuVisible(false);
         setCurrentMenu(null);
-        if (onCloseCallback) {
-            onCloseCallback();
-        }
+        if (onCloseCallback) onCloseCallback();
+        
     };
 
     const handleClickOutside = () => {
@@ -57,9 +56,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             {contextMenuVisible && (
                 <>
                     {/* Overlay to block interaction with the rest of the UI */}
-                    <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={closeContextMenu} 
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={closeContextMenu}
                     />
 
                     {/* The ContextMenu should have a higher z-index */}

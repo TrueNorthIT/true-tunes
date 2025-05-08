@@ -1,14 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { IAlbumEntity } from "@components/result-types/albumEntity";
-import { IArtistEntity } from "@components/result-types/artistEntity";
-import { ITrackEntity } from "@components/result-types/trackEntity";
-import SearchResults from "@components/Search/SearchResults";
+import React from 'react';
 import { Services } from "@enums/Services";
+import { useEffect, useState } from "react";
 import { SonosSearchTypes } from "@enums/SonosSearchType";
+import SearchResults from "@components/Search/SearchResults";
 import { useSonosActions } from "@components/providers/SonosContext";
-import { useRouter } from "next/navigation";
+import type { IAlbumEntity } from "@components/result-types/albumEntity";
+import type { ITrackEntity } from "@components/result-types/trackEntity";
+import type { IArtistEntity } from "@components/result-types/artistEntity";
 
 interface SearchResult {
     tracks: ITrackEntity[];
@@ -19,7 +19,6 @@ interface SearchResult {
 export default function Page({ params }: { params: { query: string } }) {
     const { query } = params;
     const player = useSonosActions();
-    const router = useRouter();
 
     const [searchResults, setSearchResults] = useState<SearchResult>({
         tracks: [],
@@ -44,7 +43,7 @@ export default function Page({ params }: { params: { query: string } }) {
         player.search(query, SonosSearchTypes.Artist, Services.Spotify, 24).then((result) => console.log("Pre-loaded " + result.mediaCollection.length + " artists"));
         player.search(query, SonosSearchTypes.Track, Services.Spotify, 24).then((result) => console.log("Pre-loaded " + result.mediaMetadata.length + " tracks"));
 
-    }, [query,]); // ⬅️ Very important: dependencies!
+    }, [query,player]);
 
     return (
         <SearchResults

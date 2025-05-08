@@ -1,3 +1,4 @@
+import React from "react";
 import { BackwardIcon } from "@heroicons/react/24/solid"
 import { useSonosActions } from "../providers/SonosContext"
 

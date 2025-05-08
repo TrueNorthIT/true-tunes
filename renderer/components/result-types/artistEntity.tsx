@@ -1,6 +1,6 @@
 import ImageWithFallback from '@components/ImageWithFallback';
-import { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
-import Image from 'next/image';
+import type { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import React from 'react';
 
 export interface IArtistEntity extends MediaItem {
 

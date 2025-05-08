@@ -1,4 +1,5 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
+import type { IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron'
 
 const handler = {
   send(channel: string, value: unknown) {

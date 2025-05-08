@@ -1,10 +1,10 @@
-import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/solid';
-import Image from 'next/image';
-import { Dispatch, SetStateAction } from 'react';
-import truenorth_logo from "../../public/images/truenorth_logo.png";
+import React from "react";
 import Link from 'next/link';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+import type { Dispatch, SetStateAction } from 'react';
 import ImageWithFallback from '@components/ImageWithFallback';
+import truenorth_logo from "../../public/images/truenorth_logo.png";
+import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react';
 
 interface SidebarProps {
     sidebarOpen: boolean;
@@ -67,14 +67,14 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => (
         {/* Static Sidebar for Large Screens */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-20 lg:overflow-y-auto lg:bg-gray-900 lg:pb-4">
             <div className="flex h-16 shrink-0 items-center justify-center">
-            <Link href="/music" className="flex items-center">
+                <Link href="/music" className="flex items-center">
 
-                <ImageWithFallback
-                    alt="TrueNorthIT logo"
-                    src={truenorth_logo}
-                    className="h-8 w-auto"
-                />
-            </Link>
+                    <ImageWithFallback
+                        alt="TrueNorthIT logo"
+                        src={truenorth_logo}
+                        className="h-8 w-auto"
+                    />
+                </Link>
             </div>
             <nav className="mt-8">
                 <ul role="list" className="flex flex-col items-center space-y-1">
