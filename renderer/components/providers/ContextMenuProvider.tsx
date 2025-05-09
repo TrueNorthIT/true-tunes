@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import ContextMenu from '../ContextMenu';
 import { createContext, useContext, useState, useEffect } from 'react';
 // Create a context for managing the context menu state
@@ -25,28 +25,32 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
         setOnCloseCallback(() => onClose); // THis seems to fire the onCloseCallback function straight away
     };
 
-    const closeContextMenu = () => {
+    const closeContextMenu = useCallback(() => {
         setContextMenuVisible(false);
         setCurrentMenu(null);
         if (onCloseCallback) onCloseCallback();
         
-    };
+    }, [onCloseCallback]);
 
-    const handleClickOutside = () => {
-        closeContextMenu();
-    };
-
+    
     useEffect(() => {
+        const handleClickOutside = () => {
+            closeContextMenu();
+        };
         if (contextMenuVisible) {
             document.addEventListener('click', handleClickOutside);
+            document.addEventListener('contextmenu', handleClickOutside); // Close on right-click outside
         } else {
             document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener('contextmenu', handleClickOutside); // Close on right-click outside
+
         }
 
         return () => {
             document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener('contextmenu', handleClickOutside); // Close on right-click outside
         };
-    }, [contextMenuVisible]);
+    }, [contextMenuVisible, closeContextMenu]);
 
     return (
         <ContextMenuManagerContext.Provider

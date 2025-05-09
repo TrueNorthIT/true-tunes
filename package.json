@@ -20,6 +20,7 @@
     "@svrooij/sonos": "^2.5.0",
     "@tanstack/react-query": "^5.75.5",
     "axios": "^1.7.7",
+    "clsx": "^2.1.1",
     "electron-oauth-helper": "^5.1.1",
     "electron-serve": "^1.3.0",
     "electron-store": "^8.2.0",

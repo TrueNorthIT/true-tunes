@@ -75,6 +75,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                                 playing={false}
                                 index={index}
                                 isSelected={false}
+                                isSearchResult={true}
                                 showImage={true}
                                 onSelect={() => { }}
                             ></DraggableTrack>

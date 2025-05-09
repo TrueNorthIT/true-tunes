@@ -334,7 +334,8 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
         addToQueue: async (uri, index) => { await sonos.AddToQueue(uri, index); },
         playNext: async (uri) => {
             const playbackState = await sonos.GetPlaybackState();
-            await sonos.AddToQueue(uri, playbackState.positionInfo.Track + 1);
+            const trackPosition = playbackState.positionInfo.Track === 0 ? 0 : playbackState.positionInfo.Track + 1;
+            await sonos.AddToQueue(uri, trackPosition);
         },
         getMetadata: async (itemId) => { 
             if (metadataCache.has(itemId)) {

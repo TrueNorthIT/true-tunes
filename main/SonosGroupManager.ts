@@ -175,7 +175,10 @@ class SonosGroupManager {
 
     public async JumpToPointInQueue(index: number) {
         if (this.coordinator) {
+            const stopped = this.coordinator.CurrentTransportState === "STOPPED";
+            if (stopped) await this.coordinator.SwitchToQueue();
             await this.coordinator.SeekTrack(index);
+            if (stopped) await this.coordinator.Play(); 
             return 'Jumped';
         }
     }
