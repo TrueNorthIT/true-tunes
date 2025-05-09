@@ -159,7 +159,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         document.title =
-            `TrueTunes : ${state.playbackState?.positionInfo.TrackMetaData.Title} - ${state.playbackState?.positionInfo.TrackMetaData.Artist}` ||
+            `TrueTunes : ${state.playbackState?.positionInfo?.TrackMetaData?.Title} - ${state.playbackState?.positionInfo?.TrackMetaData?.Artist}` ||
             'TrueTunes';
     }, [state.playbackState?.mediaInfo]);
 
@@ -227,10 +227,21 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
     }
 
     return {
-        connect: async (groupName) => {
-            const result = await ipcService.connect(groupName || '');
-            dispatch({ type: 'SET_CONNECTION_STATUS', payload: result });
-            return result;
+        connect: async (ipAddress?: string) => {
+            const result = await ipcService.connect(ipAddress);
+            if (result) {
+                dispatch({ type: 'SET_CONNECTION_STATUS', payload: "Connected" });
+                return "Connected";
+            }
+            const ip = prompt("Please enter the IP address of your Sonos device:");
+            if (ip) {
+                const result = await ipcService.connect(ip);
+                if (result) {
+                    dispatch({ type: 'SET_CONNECTION_STATUS', payload: "Connected" });
+                    return "Connected";
+                }
+            }
+            return "Disconnected";
         },
         connectToServices: async () => {
             const result = await ipcService.connectToServices();

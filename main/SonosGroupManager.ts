@@ -1,4 +1,4 @@
-import type { SonosDevice} from '@svrooij/sonos';
+import type { SonosDevice } from '@svrooij/sonos';
 import { SonosEvents, SonosManager } from '@svrooij/sonos'
 import { mainWindow } from './background';
 import type { Track } from '@svrooij/sonos/lib/models';
@@ -40,35 +40,33 @@ class SonosGroupManager {
             mainWindow.webContents.send('mute', data);
         })
     }
-    
+
 
     public async ConnectToServices() {
-        try{
+        try {
             let spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
             const link = await spotify.GetLoginLink();
             console.log('Link URL: ', link.regUrl, ' Enter code: ', link.linkCode);
             const credentials = await spotify.GetDeviceAuthToken(link.linkCode);
             spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify, credentials);
-        
+
             console.log(spotify);
-        }catch(e) {
+        } catch (e) {
             console.log(e);
         }
 
     }
 
-    public async Connect(groupName?: string) {
-        // try {
-        //     const connected = await this.manager.InitializeWithDiscovery(20);
-        //     if (!connected) {
-        //         throw new Error('No Sonos devices found');
-        //     }
-        // }catch(e) {
-        await this.manager.InitializeFromDevice(process.env.SONOS_HOST || '192.168.1.10');
-        // }
-        
-        if (groupName) this.coordinator = this.manager.Devices.find(d => d.GroupName === groupName)?.Coordinator;
-        else this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
+    public async Connect(ipAddress?: string) {
+        let success: boolean
+        if (ipAddress !== undefined) {
+            success = await this.manager.InitializeFromDevice(ipAddress);
+        } else {
+            success = await this.manager.InitializeWithDiscovery();
+        }
+        success = success && this.manager.Devices.length > 0;
+        if (!success) return false;
+        this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
         if (!this.coordinator) {
             throw new Error('Coordinator not found');
         }
@@ -77,18 +75,19 @@ class SonosGroupManager {
         this.ListenToVolumeChange();
         this.ListenToPlayPause();
         this.ListenToMute();
+        return true;
     }
 
     public async Search(term: string, searchType: string, service: Services, resultCount: number, skip: number = 0) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
-            try{
+            try {
                 const result = await musicService.Search({ id: searchType, term, index: skip, count: resultCount });
                 return result;
-            }catch(e) {
+            } catch (e) {
                 console.log(e);
             }
-            
+
         }
     }
 
@@ -116,7 +115,7 @@ class SonosGroupManager {
     public async GetItemMetadata(service: Services, id: string) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
-            const result = await musicService.GetExtendedMetadata({ id});
+            const result = await musicService.GetExtendedMetadata({ id });
             return result;
         }
     }
@@ -137,7 +136,7 @@ class SonosGroupManager {
 
     public async ToggleMute() {
         if (this.coordinator) {
-            await this.coordinator.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: !(await this.coordinator.GroupRenderingControlService.GetGroupMute()).CurrentMute});
+            await this.coordinator.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: !(await this.coordinator.GroupRenderingControlService.GetGroupMute()).CurrentMute });
         }
     }
 
@@ -202,7 +201,7 @@ class SonosGroupManager {
             return 'Playing';
         }
     }
-    public async ReorderTracksInQueue(startingIndex: number, numberOfTracks: number, insertBefore: number){
+    public async ReorderTracksInQueue(startingIndex: number, numberOfTracks: number, insertBefore: number) {
         if (this.coordinator) {
             await this.coordinator.AVTransportService.ReorderTracksInQueue({
                 InstanceID: 0,
@@ -217,7 +216,7 @@ class SonosGroupManager {
 
     public async RemoveTrackRangeFromQueue(startingIndex: number, numberOfTracks: number) {
         if (this.coordinator) {
-            await this.coordinator.AVTransportService.RemoveTrackRangeFromQueue({InstanceID: 0, UpdateID: null , StartingIndex: startingIndex, NumberOfTracks: numberOfTracks});
+            await this.coordinator.AVTransportService.RemoveTrackRangeFromQueue({ InstanceID: 0, UpdateID: null, StartingIndex: startingIndex, NumberOfTracks: numberOfTracks });
             return 'Removed';
         }
     }

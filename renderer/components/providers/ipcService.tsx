@@ -3,8 +3,8 @@ import type  { SonosGroupManager }  from "../../../main/SonosGroupManager";
 import type { ArtistDetails } from "../../../main/MusicAPIService";
 
 export const ipcService = {
-    connect: (groupName: string): Promise<string> => {
-        return window.ipc.invoke('connect', groupName);
+    connect: (ipAddress?: string): Promise<boolean> => {
+        return window.ipc.invoke('connect', ipAddress);
     },
     connectToServices: (): Promise<string> => {
         return window.ipc.invoke('connectToServices');

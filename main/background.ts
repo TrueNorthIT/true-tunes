@@ -103,9 +103,8 @@ ipcMain.handle('auth-login', async (event, loginOptions?: { optimistic: boolean 
 });
 
 
-ipcMain.handle('connect', async (event, groupName) => {
-  await sonosManager.Connect(groupName);
-  return 'Connected';
+ipcMain.handle('connect', async (event, ipAddress: string) => {
+  return await sonosManager.Connect(ipAddress);
 });
 ipcMain.handle('connectToServices', async (event) => {
   await sonosManager.ConnectToServices();
