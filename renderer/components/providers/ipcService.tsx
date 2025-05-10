@@ -36,6 +36,10 @@ export const ipcService = {
 
     getArtistDetails: (artistName: string): Promise<ArtistDetails> =>  {
         return window.ipc.invoke('getArtistDetails', artistName)
+    },
+
+    getLyrics: (artistName: string, trackTitle: string): Promise<string> => {
+        return window.ipc.invoke('getLyrics', artistName, trackTitle);
     }
 
 };

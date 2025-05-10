@@ -16,6 +16,8 @@ import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import React from "react";
 import { useSonosActions } from "@components/providers/SonosContext";
 import type { Track } from "@svrooij/sonos/lib/models";
+import { TN_Track } from "@models/Track";
+import { TN_Album } from "@models/Album";
 export default function Queue() {
     const queue = useQueue();
     const actions = useSonosActions();
@@ -30,13 +32,13 @@ export default function Queue() {
 
     const { registerBreakpoint } = useAsideBreakpoint();
 
-    const [optimisticQueue, setOptimisticQueue] = useState(queue.queue);
-
 
     const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
     const { active } = useDndContext();
     useDndMonitor({
         onDragOver(event) {
+
+            console.log("Drag over event: ", event);
             const { active, over } = event;
             if (!over) {
                 setOverId(null);
@@ -56,8 +58,11 @@ export default function Queue() {
             const isWithinXLeft = activeLeft <= overRect.right
             const isWithinXRight = activeRight <= overRect.right;
 
+            console.log("Active Rect Left: ", activeLeft, " Active Rect Right: ", activeRight, " Over Rect Left: ", overRect.left, " Over Rect Right: ", overRect.right, " Is Within X Left: ", isWithinXLeft, " Is Within X Right: ", isWithinXRight)
+            console.log("Active ID: ", active.id, " Over ID: ", over.id)
 
             if (active.id.toString().startsWith("search") && (isWithinXLeft || isWithinXRight)) {
+                console.log("We got an over!: ", active.id, over.id)
                 setOverId(over.id);
             } else {
                 setOverId(null);
@@ -84,32 +89,15 @@ export default function Queue() {
 
                 if (!(isWithinXLeft || isWithinXRight)) return
 
-                // Optimistic update
-                const newQueue = [...optimisticQueue];
-                const newTrack = active.data.current;
-                const newTrackIndex = parseInt(over.id.toString());
-                const newTrackUri = active.data.current.trackMetadata?.trackUri || active.data.current.uri;
-                const newTrackObj = {
-                    ...newTrack,
-                    id: newTrackUri,
-                    trackMetadata: {
-                        ...newTrack.trackMetadata,
-                        trackUri: newTrackUri,
-                    },
-                };
-
-                newQueue.splice(newTrackIndex, 0, newTrackObj as Track);
-
-                setOptimisticQueue(newQueue);
-                actions.addToQueue(active.data.current.id, Number.parseInt(over.id.toString()) + 1);
-
+                queue.addToQueue(active.data.current as TN_Track | TN_Album, Number.parseInt(over.id.toString()) + 1);
             }
 
             else {
 
                 const oldIndex = parseInt(active.id.toString());
                 const newIndex = parseInt(over.id.toString());
-                moveTracks(oldIndex, newIndex);
+                queue.reorderTracksInQueue(oldIndex+1, 1, newIndex)
+                // moveTracks(oldIndex, newIndex);
 
             }
 
@@ -147,26 +135,14 @@ export default function Queue() {
 
     useHandleManualScroll(queueContainerRef, queue, isProgrammaticScrollRef);
 
+    const items = queue.queue.map((_, i) => i.toString());
 
-    useEffect(() => {
-        setOptimisticQueue(queue.queue);
-    }, [queue.queue]);
-
-    const items = optimisticQueue.map((_, i) => i.toString());
-
-    if (trackRefs.current.length !== optimisticQueue.length) {
+    if (trackRefs.current.length !== queue.queue.length) {
         trackRefs.current = Array(queue.queue.length)
             .fill(null)
             .map((_, i) => trackRefs.current[i] || createRef());
     }
 
-    const moveTracks = useCallback((from: number, to: number) => {
-        const updated = arrayMove(optimisticQueue, from, to);
-        setOptimisticQueue(updated);
-
-        // backend reorder
-        queue.reorderTracksInQueue(from + 1, 1, to + 1);
-    }, [optimisticQueue, queue]);
 
     const handleTrackSelect = (index: number, e: React.MouseEvent) => {
         const isSelected = selectedTracks.includes(index);
@@ -197,7 +173,7 @@ export default function Queue() {
 
                 {items.map((id) => {
                     const index = parseInt(id);
-                    const track = optimisticQueue[index];
+                    const track = queue.queue[index];
 
                     const isOver = overId === id;
 
@@ -206,7 +182,7 @@ export default function Queue() {
                             {isOver && (
                                 <div className="bg-gray-600">
                                     <TrackEntity
-                                        entity={active.data.current}
+                                        entity={active.data.current as TN_Track}
                                         playing={false}
                                         small={false}
                                         index={index}
@@ -237,7 +213,7 @@ export default function Queue() {
                     {
                         !overId ? <div className="p-2 bg-neutral-800 rounded" style={{ width: queueContainerRef.current?.clientWidth }}>
                             <TrackEntity
-                                entity={active?.data?.current}
+                                entity={active?.data?.current as TN_Track}
                                 playing={false}
                                 small={false}
                                 index={-1}

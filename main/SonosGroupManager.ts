@@ -58,24 +58,30 @@ class SonosGroupManager {
     }
 
     public async Connect(ipAddress?: string) {
-        let success: boolean
-        if (ipAddress !== undefined) {
-            success = await this.manager.InitializeFromDevice(ipAddress);
-        } else {
-            success = await this.manager.InitializeWithDiscovery();
-        }
-        success = success && this.manager.Devices.length > 0;
-        if (!success) return false;
-        this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
-        if (!this.coordinator) {
-            throw new Error('Coordinator not found');
-        }
+        try {
 
-        this.ListenToTrackMetadata();
-        this.ListenToVolumeChange();
-        this.ListenToPlayPause();
-        this.ListenToMute();
-        return true;
+            let success: boolean
+            if (ipAddress !== undefined) {
+                success = await this.manager.InitializeFromDevice(ipAddress);
+            } else {
+                success = await this.manager.InitializeWithDiscovery();
+            }
+            success = success && this.manager.Devices.length > 0;
+            if (!success) return false;
+            this.coordinator = this.manager.Devices.find(d => d.Coordinator)?.Coordinator;
+            if (!this.coordinator) {
+                throw new Error('Coordinator not found');
+            }
+    
+            this.ListenToTrackMetadata();
+            this.ListenToVolumeChange();
+            this.ListenToPlayPause();
+            this.ListenToMute();
+            return true;
+        } catch (e) {
+            console.log(e);
+            return false;
+        }
     }
 
     public async Search(term: string, searchType: string, service: Services, resultCount: number, skip: number = 0) {
@@ -120,10 +126,10 @@ class SonosGroupManager {
         }
     }
 
-    public async GetMetadata(service: Services, id: string) {
+    public async GetMetadata(service: Services, id: string, skip: number = 0, count: number = 15) {
         if (this.coordinator) {
             const musicService = await this.coordinator.MusicServicesClient(service);
-            const result = await musicService.GetMetadata({ id, index: 0, count: 150, recursive: true });
+            const result = await musicService.GetMetadata({ id, index: skip, count, recursive: true });
             return result;
         }
     }

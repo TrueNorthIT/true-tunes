@@ -115,6 +115,20 @@ ipcMain.handle('getArtistDetails', async (event, artistName: string) => {
   return await MusicAPIService.getArtistDetails(artistName);
 });
 
+ipcMain.handle('getLyrics', async (event, artistName: string, trackTitle: string) => {
+  const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artistName)}/${encodeURIComponent(trackTitle)}`;
+
+  const res = await fetch(url);
+  const text = await res.text();
+  const data = JSON.parse(text);
+
+  console.log('Lyrics data:', data);
+  return data.lyrics;
+
+
+});
+
+
 ipcMain.handle('get-genre-info', async (_event, artistName: string, albumTitle: string) => {
   const url = `https://api.getgenre.com/search?artist_name=${encodeURIComponent(artistName)}&album_name=${encodeURIComponent(albumTitle)}&timeout=60`;
 

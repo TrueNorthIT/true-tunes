@@ -8,6 +8,7 @@ import VolumeSlider from '../media-controls/VolumeSlider';
 import { Bars3Icon, BellIcon } from '@heroicons/react/24/solid';
 import PlayPauseButton from '../media-controls/PlayPauseButton';
 import TrackProgressSlider from '../media-controls/TrackProgress';
+import LyricButton from "@components/media-controls/LyricButton";
 interface HeaderProps {
     setSidebarOpen: Dispatch<SetStateAction<boolean>>;
 }
@@ -30,6 +31,9 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => (
             <TrackProgressSlider />
 
             <div className="flex items-center gap-x-4 lg:gap-x-6">
+                
+                <LyricButton />
+
                 <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
                     <span className="sr-only">View notifications</span>
                     <BellIcon aria-hidden="true" className="h-6 w-6" />

@@ -6,14 +6,15 @@ import { useEffect, useState } from "react";
 import { SonosSearchTypes } from "@enums/SonosSearchType";
 import SearchResults from "@components/Search/SearchResults";
 import { useSonosActions } from "@components/providers/SonosContext";
-import type { IAlbumEntity } from "@components/result-types/albumEntity";
-import type { ITrackEntity } from "@components/result-types/trackEntity";
-import type { IArtistEntity } from "@components/result-types/artistEntity";
+import type { TN_Track } from '@models/Track';
+import type { TN_Artist } from '@models/Artist';
+import type { TN_Album } from '@models/Album';
+
 
 interface SearchResult {
-    tracks: ITrackEntity[];
-    artists: IArtistEntity[];
-    albums: IAlbumEntity[];
+    tracks: TN_Track[];
+    artists: TN_Artist[];
+    albums: TN_Album[];
 }
 
 export default function Page({ params }: { params: { query: string } }) {
@@ -33,9 +34,9 @@ export default function Page({ params }: { params: { query: string } }) {
             console.log("Search result:", result);
 
             setSearchResults({
-                tracks: (result.track?.mediaMetadata as ITrackEntity[]) || [],
-                artists: result.artist?.mediaCollection || [],
-                albums: (result.album?.mediaCollection as IAlbumEntity[]) || [],
+                tracks: (result.track?.mediaMetadata) || [],
+                artists: (result.artist?.mediaCollection as TN_Artist[]) || [],
+                albums: (result.album?.mediaCollection as TN_Album[]) || [],
             });
         });
         // Let's pre-fetch tracks, albums and artists

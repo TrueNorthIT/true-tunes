@@ -1,17 +1,17 @@
 /* eslint-disable react/prop-types */
-import type { Track } from '@svrooij/sonos/lib/models';
-import type { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import ImageWithFallback from '@components/ImageWithFallback';
-import missing_album_art from '@public/images/missing_album_art.png';
-import { useContextMenuManager } from '@providers/ContextMenuProvider';
-import { useSonosActions } from '@components/providers/SonosContext';
+import clsx from 'clsx';
 import React from 'react';
 import { CSS } from "@dnd-kit/utilities";
-import type { UniqueIdentifier } from '@dnd-kit/core';
-import { useDraggable } from '@dnd-kit/core';
-import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import type { TN_Track } from '../../models/Track';
+import type { UniqueIdentifier } from '@dnd-kit/core';
+import ImageWithFallback from '@components/ImageWithFallback';
+import missing_album_art from '@public/images/missing_album_art.png';
+import { useSonosActions } from '@components/providers/SonosContext';
+import { useContextMenuManager } from '@providers/ContextMenuProvider';
+import type { MediaItem } from '@svrooij/sonos/lib/musicservices/smapi-client';
 export interface ITrackEntity extends MediaItem {
     trackMetadata: {
         albumArtURI: string;
@@ -28,7 +28,7 @@ export interface ITrackEntity extends MediaItem {
 }
 
 export interface TrackEntityProps {
-    entity: ITrackEntity,
+    entity: TN_Track,
     playing: boolean,
     index?: number,
     small: boolean,
@@ -38,46 +38,6 @@ export interface TrackEntityProps {
     providedRef?: React.RefObject<HTMLDivElement>,
     onSelectChange?: (isSelected: boolean) => void
 }
-
-const formatDuration = (seconds?: number): string | undefined => {
-    if (!seconds) return undefined;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
-const useTrackData = (entity?: ITrackEntity | Track, showImage?: boolean | null) => {
-    const [track, setTrack] = useState<Track>({ Title: '', Artist: '', Album: '', AlbumArtUri: '' });
-    const showAlbumArt = showImage ?? true;
-
-    useEffect(() => {
-        if (!entity) {
-            setTrack({ Title: '', Artist: '', Album: '', AlbumArtUri: '' });
-            return;
-        }
-
-        // Normalize ITrackEntity vs Track
-        if ('trackMetadata' in entity) {
-            const { trackMetadata, title, id } = entity as ITrackEntity;
-            setTrack({
-                Title: title,
-                Artist: trackMetadata.artist,
-                Album: trackMetadata.album,
-                AlbumArtUri: trackMetadata.albumArtURI,
-                TrackUri: id,
-            });
-        } else {
-            setTrack(entity as Track);
-        }
-    }, [entity]);
-
-    return { track, showAlbumArt };
-};
-
-function extractSpotifyTrackUri(sonosUri: string): string | null {
-    const match = sonosUri.match(/(spotify:track:[^?]+)/);
-    return match ? match[1] : null;
-  }
 
 const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
     entity,
@@ -92,12 +52,11 @@ const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
     const player = useSonosActions();
     const router = useRouter();
     const { handleContextMenu } = useContextMenuManager();
-    const { track, showAlbumArt } = useTrackData(entity, showImage);
 
     const contextOptions = useMemo(() => {
         const playNow = async () => {
             if (isSearchResult) {
-                await player.playNext(track.TrackUri);
+                await player.playNext(entity.id);
                 player.next();
                 const playBackState = await player.getPlaybackState();
                 if (playBackState.transportState !== "PLAYING") player.togglePlayback();
@@ -110,40 +69,25 @@ const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
             { label: 'Play Now', onClick: playNow },
             {
                 label: isSearchResult ? 'Add to Queue' : 'Remove from Queue',
-                onClick: () => isSearchResult ? player.addToQueue(track.TrackUri) : player.removeFromQueue(index + 1),
+                onClick: () => isSearchResult ? player.addToQueue(entity.id) : player.removeFromQueue(index + 1),
             },
-            { label: 'Go to Album', onClick: async () => {
-                console.log("Getting album metadata " + track.TrackUri);
-                const metadata = await player.getMetadata(extractSpotifyTrackUri(track.TrackUri));
-                console.log(metadata);
-                const albumId = (metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.albumId;
-                if (albumId) {
-                    router.push(`/music/view/album/${albumId}`);
-                } else {
-                    console.error('Album ID not found in metadata');
-                }
-
-            }},
+            { label: 'Go to Album', onClick: async () => router.push(`/music/view/album/${entity.album.id}`) },
             {
                 label: 'Go to Artist',
-                onClick: async () => {
-                    const metadata = await player.getMetadata(extractSpotifyTrackUri(track.TrackUri));
-                    const artistId = (metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.artistId;
-                    if (artistId) {
-                        router.push(`/music/view/artist/${artistId}`);
-                    } else {
-                        console.error('Artist ID not found in metadata');
-                    }
-                },
+                onClick: async () => router.push(`/music/view/artist/${entity.artist.id}`),
             },
+            {
+                label: 'See Lyrics',
+                onClick: async () => router.push(`/music/lyrics/${entity.artist.name}/${entity.title}`),
+            }
 
-            
+
         ];
-    }, [player, track, index, isSearchResult, router]);
+    }, [player, entity, index, isSearchResult, router]);
 
     const onContextMenu = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
-        handleContextMenu(e, contextOptions, () => {});
+        handleContextMenu(e, contextOptions, () => { });
     }, [handleContextMenu, contextOptions]);
 
     const checkboxHandler = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,12 +106,12 @@ const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
                 }
             )}
         >
-            {showAlbumArt && (
+            {showImage && (
                 <div className={clsx('relative', small ? 'w-8 h-8' : 'w-16 h-16')}>
                     <ImageWithFallback
-                        src={track.AlbumArtUri}
+                        src={entity.artURI}
                         fallback={missing_album_art}
-                        alt={track.Title}
+                        alt={entity.title}
                         width={small ? 40 : 100}
                         height={small ? 40 : 100}
                         className={clsx('rounded-lg object-cover', small ? 'min-w-8 min-h-8' : 'min-w-16 min-h-16')}
@@ -183,9 +127,9 @@ const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
             )}
 
             <div className="relative ml-4 flex-1 w-0">
-                <h2 className="text-lg font-semibold flex items-center overflow-hidden text-nowrap mr-4" title={track.Title}>
-                    <span className="overflow-ellipsis overflow-hidden" >{track.Title}</span>
-                    {entity?.tags?.explicit === 1 && (
+                <h2 className="text-lg font-semibold flex items-center overflow-hidden text-nowrap mr-4" title={entity.title}>
+                    <span className="overflow-ellipsis overflow-hidden" >{entity.title}</span>
+                    {entity.explicit && (
                         <span
                             className="ml-2 text-xs font-medium bg-red-800 px-2 py-0.5 rounded"
                             title="Explicit Content"
@@ -194,13 +138,13 @@ const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
                         </span>
                     )}
                 </h2>
-                <p className="text-gray-400 truncate" title={`${track.Artist} - ${track.Album}`}>
-                    {track.Artist} – <strong>{track.Album}</strong>
+                <p className="text-gray-400 truncate" title={`${entity.artist.name} - ${entity.album.name}`}>
+                    {entity.artist.name} – <strong>{entity.album.name}</strong>
                 </p>
             </div>
 
             <span className="ml-auto mr-4 font-mono text-sm">
-                {formatDuration((entity as ITrackEntity)?.trackMetadata?.duration)}
+                {entity.duration}
             </span>
 
             <input
@@ -213,7 +157,7 @@ const TrackEntity: React.FC<TrackEntityProps> = React.memo(({
     );
 });
 TrackEntity.displayName = 'TrackEntity';
-export function DraggableTrack({ id, index, entity, isSelected, playing, small, showImage, isSearchResult  , onSelect }: TrackEntityProps & { id: UniqueIdentifier, onSelect: (index: number, e: React.MouseEvent) => void }) {
+export function DraggableTrack({ id, index, entity, isSelected, playing, small, showImage, isSearchResult, onSelect }: TrackEntityProps & { id: UniqueIdentifier, onSelect: (index: number, e: React.MouseEvent) => void }) {
     const {
         attributes,
         listeners,

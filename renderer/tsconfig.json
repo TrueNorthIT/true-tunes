@@ -22,7 +22,11 @@
       ],
       "@enums/*": [
         "./enums/*"
-      ]
+      ],
+      "@models/*": [
+        "./models/*"
+      ],
+      
     },
     "plugins": [
       {

@@ -1,21 +1,35 @@
 import React, { createContext, useContext, useMemo, useReducer, useEffect, useState } from 'react';
-import { BrowseResponse, Track } from '@svrooij/sonos/lib/models';
-import { SonosState } from '@svrooij/sonos/lib/models/sonos-state';
-import { MediaList } from '@svrooij/sonos/lib/musicservices/smapi-client';
+import type { BrowseResponse, Track } from '@svrooij/sonos/lib/models';
+import type { SonosState } from '@svrooij/sonos/lib/models/sonos-state';
+import type { MediaList } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import { SonosSearchTypes } from '../../enums/SonosSearchType';
 import { Services } from '../../enums/Services';
 import { ipcService, sonos } from './ipcService';
-
+import type { TN_Track, TN_TrackRef } from '../../models/Track';
+import type { TN_Album } from '../../models/Album';
+import type { TN_Artist } from '../../models/Artist';
+import type { ITrackEntity } from '@components/result-types/trackEntity';
+import type { IAlbumEntity } from '@components/result-types/albumEntity';
+import type { IArtistEntity } from '@components/result-types/artistEntity';
+import { decode } from 'html-entities';
 interface SonosStateType {
     playbackState?: Partial<SonosState>;
     connectionStatus: string;
     queue: Track[];
 }
 
+interface TN_MediaList {
+    index: number;
+    count: number;
+    total: number;
+    mediaMetadata?: TN_Track[];
+    mediaCollection?: (TN_Album | TN_Artist)[];
+}
+
 interface fullFatSearchResult {
-    track: MediaList;
-    album: MediaList;
-    artist: MediaList;
+    track: TN_MediaList;
+    album: TN_MediaList;
+    artist: TN_MediaList;
 }
 
 type SonosAction =
@@ -42,17 +56,25 @@ interface SonosActions {
     listenToMuteEvent: () => void;
     listenToVolumeEvent: () => void;
     listenToPlayPauseEvent: () => void;
-    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number, skip?: number) => Promise<MediaList>;
+    search: (searchTerm: string, searchType: SonosSearchTypes, service: Services, resultCount: number, skip?: number) => Promise<TN_MediaList>;
     fullFatSearch: (searchTerm: string, service: Services) => Promise<fullFatSearchResult>;
     playSongNow: (uri: string) => void;
     getQueue: () => Promise<Track[]>;
     reorderTracksInQueue: (startingIndex: number, numberOfTracks: number, insertBefore: number) => void;
     addToQueue: (uri: string, index?: number) => Promise<void>;
     playNext: (uri: string) => Promise<void>;
-    getMetadata: (itemId: string) => Promise<MediaList>;
+    getMetadata: (itemId: string, skip?: number, count?: number) => Promise<MediaList>;
+    getTrack: (ref: string) => Promise<TN_Track>;
+    getAlbum: (ref: string) => Promise<TN_Album>;
+    getArtist: (ref: string) => Promise<TN_Artist>;
     getItemMetadata: (itemId: string) => Promise<MediaList>;
     removeFromQueue: (index: number) => void;
     removeRangeFromQueue: (index: number, count: number) => void;
+    utils: {
+        convertTrackEntityToTNTrack: (mediaMetadata: ITrackEntity) => Promise<TN_Track>;
+        convertAlbumEntityToTNAlbum: (mediaMetadata: IAlbumEntity) => Promise<TN_Album>;
+        convertArtistEntityToTNArtist: (mediaMetadata: IArtistEntity) => Promise<TN_Artist>;
+    }
 }
 
 const initialState: SonosStateType = {
@@ -127,7 +149,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
-        actions.connect().then(async () => {
+        actions.connect("192.168.0.114").then(async () => {
             await actions.connectToServices();
             fetchInitialState();
             actions.listenToTrackMetadata();
@@ -201,11 +223,13 @@ export function useSonosActions() {
 
 function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTime: React.Dispatch<React.SetStateAction<number | null>>): SonosActions {
 
-    const searchCache = new Map<string, MediaList>();
+    const searchCache = new Map<string, TN_MediaList>();
     const fullFatSearchCache = new Map<string, fullFatSearchResult>();
     const metadataCache = new Map<string, MediaList>();
     const itemMetadataCache = new Map<string, MediaList>();
-
+    const trackCache = new Map<string, TN_Track>();
+    const albumCache = new Map<string, TN_Album>();
+    const artistCache = new Map<string, TN_Artist>();
 
     async function refreshPlaybackStateAndQueue() {
         const playbackState = await sonos.GetPlaybackState();
@@ -226,6 +250,64 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
         setOptimisticRelTime(newRelTimeInSeconds);
     }
 
+    const formatDuration = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+
+    const convertTrackEntityToTNTrack = async (mediaMetadata: ITrackEntity): Promise<TN_Track> => {
+        return {
+            type: "track",
+            title: mediaMetadata.title,
+            artist: {
+                name: mediaMetadata.trackMetadata.artist,
+                id: mediaMetadata.trackMetadata.artistId,
+            },
+            album: {
+                name: mediaMetadata.trackMetadata.album,
+                id: mediaMetadata.trackMetadata.albumId,
+            },
+            artURI: mediaMetadata.trackMetadata.albumArtURI,
+            duration: formatDuration(mediaMetadata.trackMetadata.duration),
+            explicit: mediaMetadata.tags?.explicit === 1,
+            id: mediaMetadata.id,
+        };
+    }
+
+    const convertAlbumEntityToTNAlbum = async (mediaMetadata: IAlbumEntity): Promise<TN_Album> => {
+        const albumMetadata = await sonos.GetMetadata(Services.Spotify, mediaMetadata.id, 0, 1000);
+
+        return {
+            type: "album",
+            name: mediaMetadata.title,
+            artist: {
+                name: mediaMetadata.artist,
+                id: mediaMetadata.artistId,
+            },
+            artURI: mediaMetadata.albumArtURI,
+            id: mediaMetadata.id,
+            trackCount: albumMetadata.mediaMetadata.length,
+            trackList: albumMetadata.mediaMetadata.map((track) => ({
+                title: track.title,
+                id: track.id,
+            })),
+            duration: formatDuration(albumMetadata.mediaMetadata.reduce((acc, track: ITrackEntity) => acc + (track.trackMetadata.duration || 0), 0)),
+        }
+    }
+
+    const convertArtistEntityToTNArtist = async (mediaMetadata: IArtistEntity): Promise<TN_Artist> => {
+        return {
+            type: "artist",
+            name: mediaMetadata.title,
+            id: mediaMetadata.id,
+            artURI: mediaMetadata.albumArtURI,
+            heroArtURI: mediaMetadata.albumArtURI,
+        }
+    }
+
+
     return {
         connect: async (ipAddress?: string) => {
             const result = await ipcService.connect(ipAddress);
@@ -233,7 +315,7 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
                 dispatch({ type: 'SET_CONNECTION_STATUS', payload: "Connected" });
                 return "Connected";
             }
-            const ip = prompt("Please enter the IP address of your Sonos device:");
+            const ip = prompt("Ip");
             if (ip) {
                 const result = await ipcService.connect(ip);
                 if (result) {
@@ -309,8 +391,32 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
                 return searchCache.get(key)!;
             }
             const result = await sonos.Search(searchTerm, searchType, service, resultCount, skip);
-            searchCache.set(key, result);
-            return result;
+            const mediaList: TN_MediaList = {
+                index: result.index,
+                count: result.count,
+                total: result.total,
+                mediaMetadata: [],
+                mediaCollection: []
+            }
+
+            if (searchType === SonosSearchTypes.Track) {
+                const tn_Tracks = await Promise.all(result.mediaMetadata.map(convertTrackEntityToTNTrack));
+                mediaList.mediaMetadata = tn_Tracks;
+            }
+
+            if (searchType === SonosSearchTypes.Album) {
+                const tn_Albums = await Promise.all(result.mediaCollection.map(convertAlbumEntityToTNAlbum));
+                mediaList.mediaCollection = tn_Albums;
+            }
+
+            if (searchType === SonosSearchTypes.Artist) {
+                const tn_Artists = await Promise.all(result.mediaCollection.map(convertArtistEntityToTNArtist));
+                mediaList.mediaCollection = tn_Artists;
+            }
+
+
+            searchCache.set(key, mediaList);
+            return mediaList;
         },
 
         fullFatSearch: async (searchTerm, service) => {
@@ -320,10 +426,36 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
             if (fullFatSearchCache.has(key)) {
                 return fullFatSearchCache.get(key)!;
             }
+            const trackRawResult = await sonos.Search(cleanQuery, SonosSearchTypes.Track, service, 32);
+            const albumRawResult = await sonos.Search(cleanQuery, SonosSearchTypes.Album, service, 12);
+            const artistRawResult = await sonos.Search(cleanQuery, SonosSearchTypes.Artist, service, 20);
+
+            const tn_Tracks = await Promise.all(trackRawResult.mediaMetadata.map(convertTrackEntityToTNTrack));
+            const tn_Albums = await Promise.all(albumRawResult.mediaCollection.map(convertAlbumEntityToTNAlbum));
+            const tn_Artists = await Promise.all(artistRawResult.mediaCollection.map(convertArtistEntityToTNArtist));
+
             const result: fullFatSearchResult = {
-                track: await sonos.Search(cleanQuery, SonosSearchTypes.Track, service, 32),
-                album: await sonos.Search(cleanQuery, SonosSearchTypes.Album, service, 12),
-                artist: await sonos.Search(cleanQuery, SonosSearchTypes.Artist, service, 20)
+                track: {
+                    index: trackRawResult.index,
+                    count: trackRawResult.count,
+                    total: trackRawResult.total,
+                    mediaMetadata: tn_Tracks,
+                    mediaCollection: []
+                },
+                album: {
+                    index: albumRawResult.index,
+                    count: albumRawResult.count,
+                    total: albumRawResult.total,
+                    mediaMetadata: [],
+                    mediaCollection: tn_Albums
+                },
+                artist: {
+                    index: artistRawResult.index,
+                    count: artistRawResult.count,
+                    total: artistRawResult.total,
+                    mediaMetadata: [],
+                    mediaCollection: tn_Artists
+                }
             };
             fullFatSearchCache.set(key, result);
             return result;
@@ -337,15 +469,19 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
             const trackPosition = playbackState.positionInfo.Track === 0 ? 0 : playbackState.positionInfo.Track + 1;
             await sonos.AddToQueue(uri, trackPosition);
         },
-        getMetadata: async (itemId) => { 
-            if (metadataCache.has(itemId)) {
-                return metadataCache.get(itemId)!;
+        getMetadata: async (itemId, skip = 0, count = 15) => {
+            const key = `${itemId}|${skip}|${count}`;
+            if (metadataCache.has(key)) {
+                const cachedMetadata = metadataCache.get(key);
+                console.log("Cache hit for metadata:", key, cachedMetadata);
+                return cachedMetadata;
             }
-            const metadata = await sonos.GetMetadata(Services.Spotify, itemId);
-            metadataCache.set(itemId, metadata);
+            const metadata = await sonos.GetMetadata(Services.Spotify, itemId, skip, count);
+            metadataCache.set(key, metadata);
             return metadata;
         },
-        getItemMetadata: async (itemId) => { 
+        getItemMetadata: async (itemId) => {
+            if (itemId === undefined)  return undefined;
             if (itemMetadataCache.has(itemId)) {
                 return itemMetadataCache.get(itemId)!;
             }
@@ -354,7 +490,83 @@ function createActions(dispatch: React.Dispatch<SonosAction>, setOptimisticRelTi
             return itemMetadata;
         },
         removeFromQueue: (index) => { sonos.RemoveTrackRangeFromQueue(index, 1); },
-        removeRangeFromQueue: (index, count) => { sonos.RemoveTrackRangeFromQueue(index, count); }
+        removeRangeFromQueue: (index, count) => { sonos.RemoveTrackRangeFromQueue(index, count); },
+        getTrack: async (ref) => {
+            if (!ref) return undefined;
+            if (trackCache.has(ref)) {
+                return trackCache.get(ref)!;
+            }
+
+            const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref)).mediaMetadata[0] as ITrackEntity;
+            const md = metatadata.trackMetadata;
+
+            const track: TN_Track = {
+                type: "track",
+                id: metatadata.id,
+                title: decode(metatadata.title),
+                artist: { id: md.artistId, name: decode(md.artist) },
+                album: { id: md.albumId, name: decode(md.album) },
+                artURI: md.albumArtURI,
+                duration: formatDuration(md.duration),
+                explicit: (metatadata.tags?.explicit ?? 0) === 1,
+            } ;
+
+            trackCache.set(ref, track);
+            return track;
+        },
+        getAlbum: async (ref) => {
+            if (ref === undefined) return undefined;
+            if (albumCache.has(ref)) {
+                return albumCache.get(ref)!;
+            }
+
+            const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref)).mediaCollection[0] as IAlbumEntity;
+            const deep_metadata = await sonos.GetMetadata(Services.Spotify, ref, 0, 1000);
+            const tn_Tracks = await Promise.all(deep_metadata.mediaMetadata.map(convertTrackEntityToTNTrack));
+            const tn_TrackRefs: TN_TrackRef[] = [];
+            for (const track of tn_Tracks) {
+                if (!trackCache.has(track.id)) trackCache.set(track.id, track);
+                tn_TrackRefs.push({ id: track.id, title: track.title });
+            }
+
+            const album: TN_Album = {
+                type: "album",
+                id: metatadata.id,
+                name: decode(metatadata.title),
+                artist: { id: metatadata.artistId, name: decode(metatadata.artist) },
+                artURI: metatadata.albumArtURI,
+                trackCount: deep_metadata.mediaMetadata.length,
+                trackList: tn_TrackRefs,
+                duration: formatDuration(deep_metadata.mediaMetadata.reduce((acc, track: ITrackEntity) => acc + (track.trackMetadata.duration || 0), 0)),
+            }
+
+            albumCache.set(ref, album);
+            return album;
+        },
+        getArtist: async (ref) => {
+            if (ref === undefined) return undefined;
+            if (artistCache.has(ref)) {
+                return artistCache.get(ref)!;
+            }
+
+            const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref)).mediaCollection[0] as IArtistEntity;
+
+            const artist: TN_Artist = {
+                type: "artist",
+                id: metatadata.id,
+                name: decode(metatadata.title),
+                artURI: metatadata.albumArtURI,
+                heroArtURI: metatadata.albumArtURI,
+            };
+
+            artistCache.set(ref, artist);
+            return artist;
+        },
+        utils: {
+            convertTrackEntityToTNTrack,
+            convertAlbumEntityToTNAlbum,
+            convertArtistEntityToTNArtist
+        }
     };
 }
 
@@ -365,6 +577,7 @@ function convertRelTimeToSeconds(relTime: string): number {
 }
 
 function convertSecondsToRelTime(seconds: number): string {
+    if (!seconds || Number.isNaN(seconds)) return "00:00:00";
     const date = new Date(seconds * 1000);
     return date.toISOString().substr(12, 7);
 }

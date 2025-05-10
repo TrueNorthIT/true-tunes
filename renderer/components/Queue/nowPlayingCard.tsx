@@ -6,8 +6,8 @@ import type { StaticImageData } from "next/image";
 import ImageWithFallback from "@components/ImageWithFallback";
 import truenorth_logo from "@public/images/truenorth_logo.png";
 import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
-import { useSonosActions, useSonosQueue } from "@providers/SonosContext";
-import type { ITrackEntity } from "@components/result-types/trackEntity";
+import { useSonosActions, useSonosState } from "@providers/SonosContext";
+import type { Track } from "@svrooij/sonos/lib/models";
 
 export default function NowPlayingCard() {
     const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(truenorth_logo);
@@ -17,34 +17,29 @@ export default function NowPlayingCard() {
     const [artistId, setArtistId] = useState<string | null>(null);
     const [albumId, setAlbumId] = useState<string | null>(null);
 
-
-    const queue = useSonosQueue();
     const actions = useSonosActions();
+    const state = useSonosState();
+    const extractSpotifyTrackUri = (sonosUri: string): string | null => {
+        if (!sonosUri) return null;
+        const match = sonosUri.match(/(spotify:track:[^?]+)/);
+        return match ? match[1] : null;
+    }
 
     useEffect(() => {
-        if (queue.queue.length > 0) {
-            const currentTrack = queue.queue[queue.currentTrackIndex - 1];
-            console.log("Current Track: ", currentTrack);
-            const trackId = currentTrack?.TrackUri.match(/spotify:track:[^?]+/)[0]
+        const nowPlaying = (state?.playbackState?.positionInfo?.TrackMetaData) as Track;
+        actions.getTrack(extractSpotifyTrackUri(nowPlaying?.TrackUri)).then((track) => {
+            setAlbumName(track.album.name);
+            setTrackName(track.title);
+            setArtistName(track.artist.name);
+            setAlbumArtUri(track.artURI);
+            setArtistId(track.artist.id);
+            setAlbumId(track.album.id);
+        });
 
-            actions.getItemMetadata(trackId).then((metadata) => {
-                console.log("Metadata: ", metadata);
-                setAlbumId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.albumId);
-                setArtistId((metadata.mediaMetadata[0] as ITrackEntity).trackMetadata.artistId);
-            });
 
+        
 
-            setAlbumArtUri(currentTrack?.AlbumArtUri || truenorth_logo);
-            setAlbumName(currentTrack?.Album || "Unknown Album");
-            setArtistName(currentTrack?.Artist || "Unknown Artist");
-            setTrackName(currentTrack?.Title || "Unknown Track");
-        } else {
-            setAlbumArtUri(truenorth_logo);
-            setAlbumName("TrueNorth Radio");
-            setArtistName("TrueNorth");
-            setTrackName("TrueNorth Radio");
-        }
-    }, [queue, actions]);
+    }, [state, actions]);
 
     const [isSmall, setIsSmall] = useState(false);
 

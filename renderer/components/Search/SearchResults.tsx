@@ -2,14 +2,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import ArtistEntity from '@components/result-types/artistEntity';
-import { DraggableTrack, type ITrackEntity } from '@components/result-types/trackEntity';
-import { DraggableAlbum, type IAlbumEntity } from '@components/result-types/albumEntity';
-import type { IArtistEntity } from '@components/result-types/artistEntity';
+import { DraggableTrack } from '@components/result-types/trackEntity';
+import { DraggableAlbum } from '@components/result-types/albumEntity';
+import type { TN_Track } from '@models/Track';
+import type { TN_Artist } from '@models/Artist';
+import type { TN_Album } from '@models/Album';
 interface SearchResultsProps {
     term: string;
-    trackResults: ITrackEntity[];
-    artistResults: IArtistEntity[];
-    albumResults: IAlbumEntity[];
+    trackResults: TN_Track[];
+    artistResults: TN_Artist[];
+    albumResults: TN_Album[];
 }
 
 const CARD_WIDTH = 128;

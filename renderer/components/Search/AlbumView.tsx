@@ -1,28 +1,23 @@
-import { Services } from '@enums/Services';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { SonosSearchTypes } from '@enums/SonosSearchType';
 import { useSonosActions, } from '@providers/SonosContext';
 import { ipcService } from '@components/providers/ipcService';
 import ImageWithFallback from '@components/ImageWithFallback';
-import type { IAlbumEntity } from '@components/result-types/albumEntity';
-import { DraggableTrack, type ITrackEntity } from '@components/result-types/trackEntity';
+import { DraggableTrack } from '@components/result-types/trackEntity';
 import type { IArtistEntity } from '@components/result-types/artistEntity';
+import type { TN_Track } from '@models/Track';
+import type { TN_Album } from '@models/Album';
 
 interface AlbumViewProps {
-    album: IAlbumEntity;
+    album: TN_Album;
     onBack?: (artist?: IArtistEntity) => void;
 }
 
-const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
+
 
 const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
     const player = useSonosActions();
-    const [tracks, setTracks] = useState<ITrackEntity[]>([]);
+    const [tracks, setTracks] = useState<TN_Track[]>([]);
     const [loading, setLoading] = useState(true);
     const [genres, setGenres] = useState<string[] | null>(null);
 
@@ -30,17 +25,16 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
 
     useEffect(() => {
         setLoading(true);
-        player.getMetadata(album.id).then((result) => {
-            console.log('Album Metadata:', album);
-            console.log('Album Tracks:', result);
-
-            setTracks(result?.mediaMetadata as ITrackEntity[] || []);
+        Promise.all(album?.trackList.map(async (track) => await player.getTrack(track.id))).then((albumTracks) => {
+            setTracks(albumTracks);            
             setLoading(false);
-        });
+        }) 
+
+
 
         // const genreURL = `https://api.getgenre.com/search?artist_name=${encodeURIComponent(album.artist)}&album_name=${encodeURIComponent(album.title)}&timeout=30`;
 
-        ipcService.getGenreInfo(album.artist, album.title)
+        ipcService.getGenreInfo(album.artist.name, album.name)
             .then(data => {
                 console.log('Genre data:', data);
                 if (data?.top_genres?.length) {
@@ -55,7 +49,7 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
                 console.error('Genre fetch failed', err);
                 setGenres([]);
             });
-    }, [album]);
+    }, [album, player]);
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -66,10 +60,10 @@ const AlbumView: React.FC<AlbumViewProps> = ({ album, onBack }) => {
             )}
 
             <div className="flex items-start gap-6">
-                <ImageWithFallback src={album.albumArtURI} alt={album.title} className="w-32 h-32 object-cover rounded-lg" />
+                <ImageWithFallback src={album.artURI} alt={album.name} className="w-32 h-32 object-cover rounded-lg" />
                 <div>
-                    <h1 className="text-2xl font-bold text-white">{album.title}</h1>
-                    <p className="text-gray-400 hover:underline" onClick={() => router.push(`/music/view/artist/${album.artistId}`)} >{album.artist}</p>
+                    <h1 className="text-2xl font-bold text-white">{album.name}</h1>
+                    <p className="text-gray-400 hover:underline" onClick={() => router.push(`/music/view/artist/${album.artist.id}`)} >{album.artist.name}</p>
                     {genres === null && <p className="text-gray-400">Loading genres...</p>}
                     {(genres && genres.length) > 0 && (
                         <div className="mt-2 overflow-x-auto">
