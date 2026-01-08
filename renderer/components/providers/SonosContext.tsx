@@ -647,7 +647,8 @@ function createActions(
       const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref))
         .mediaMetadata[0] as ITrackEntity;
       const md = metatadata.trackMetadata;
-
+      if (!md) console.log("No trackMetadata for ref:", ref);
+      console.log("Track metadata for ref:", ref, md, metatadata);
       const track: TN_Track = {
         type: "track",
         id: metatadata.id,
