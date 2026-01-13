@@ -40,6 +40,9 @@ export default function NowPlayingCard() {
         setAlbumArtUri(track.artURI);
         setArtistId(track.artist.id);
         setAlbumId(track.album.id);
+      })
+      .catch((error) => {
+        console.error("Error fetching track info:", error);
       });
   }, [state, actions]);
 

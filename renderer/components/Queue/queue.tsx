@@ -148,7 +148,6 @@ export default function Queue() {
   useHandleManualScroll(queueContainerRef, queue, isProgrammaticScrollRef);
 
   const items = queue.queue.map((_, i) => i.toString());
-  console.log("Queue items: ", queue);
   if (trackRefs.current.length !== queue.queue.length) {
     trackRefs.current = Array(queue.queue.length)
       .fill(null)
