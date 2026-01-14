@@ -94,9 +94,21 @@ export default function Queue() {
 
     onDragEnd(event) {
       const { active, over } = event;
-      if (active.id.toString().startsWith("search") && !overId) return;
+      if (
+        active.id.toString().startsWith("search") &&
+        !overId &&
+        queue.queue.length > 0
+      )
+        return;
       setOverId(null);
-      if (!over || active.id === over.id) {
+      if ((!over || active.id === over.id) && queue.queue.length > 0) {
+        return;
+      }
+      if (
+        queue.queue.length === 0 &&
+        active.id.toString().startsWith("search")
+      ) {
+        queue.addToQueue(active.data.current as TN_Track | TN_Album, 0);
         return;
       }
 
