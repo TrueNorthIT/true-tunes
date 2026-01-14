@@ -1,5 +1,6 @@
 import type { SonosDevice } from '@svrooij/sonos';
 import { SonosEvents, SonosManager } from '@svrooij/sonos'
+import type { SmapiClient } from '@svrooij/sonos/lib/musicservices/smapi-client';
 import { mainWindow } from './background';
 import type { Track } from '@svrooij/sonos/lib/models';
 import type { Services } from '../renderer/enums/Services';
@@ -12,6 +13,8 @@ class SonosGroupManager {
 
     private manager: SonosManager;
     private coordinator: SonosDevice | undefined;
+    private serviceClients = new Map<number, SmapiClient>();
+    private serviceAuth = new Map<number, { authToken: string; key: string }>();
 
     constructor() {
         this.manager = new SonosManager();
@@ -42,14 +45,49 @@ class SonosGroupManager {
     }
 
 
+    private async getMusicServiceClient(serviceId: number) {
+        if (!this.coordinator) return undefined;
+        if (this.serviceClients.has(serviceId)) {
+            return this.serviceClients.get(serviceId);
+        }
+        const auth = this.serviceAuth.get(serviceId);
+        const musicService = await this.coordinator.MusicServicesClient(serviceId, auth);
+        this.serviceClients.set(serviceId, musicService);
+        return musicService;
+    }
+
+    private async authenticateService(serviceId: number) {
+        if (!this.coordinator) return undefined;
+        const musicService = await this.coordinator.MusicServicesClient(serviceId);
+        const link = await musicService.GetLoginLink();
+        console.log('Link URL: ', link.regUrl, ' Enter code: ', link.linkCode);
+        const credentials = await musicService.GetDeviceAuthToken(link.linkCode);
+        this.serviceAuth.set(serviceId, {
+            authToken: credentials.authToken,
+            key: credentials.privateKey
+        });
+        const authenticatedService = await this.coordinator.MusicServicesClient(serviceId, {
+            authToken: credentials.authToken,
+            key: credentials.privateKey
+        });
+        this.serviceClients.set(serviceId, authenticatedService);
+        return authenticatedService;
+    }
+
+    private isNoAuthTokenError(error: unknown): boolean {
+        if (!error) return false;
+        if (error instanceof Error && error.message.toLowerCase().includes('no auth token')) {
+            return true;
+        }
+        if (typeof error !== 'object') return false;
+        const fault = (error as { Fault?: { detail?: { ExceptionInfo?: string } } }).Fault;
+        const exceptionInfo = fault?.detail?.ExceptionInfo;
+        return typeof exceptionInfo === 'string' && exceptionInfo.toLowerCase().includes('no auth token');
+    }
+
     public async ConnectToServices() {
         try {
-            let spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify);
-            const link = await spotify.GetLoginLink();
-            console.log('Link URL: ', link.regUrl, ' Enter code: ', link.linkCode);
-            const credentials = await spotify.GetDeviceAuthToken(link.linkCode);
-            spotify = await this.coordinator?.MusicServicesClient(SonosService.Spotify, credentials);
-
+            const spotify = await this.authenticateService(SonosService.Spotify);
             console.log(spotify);
         } catch (e) {
             console.log(e);
@@ -86,7 +124,7 @@ class SonosGroupManager {
 
     public async Search(term: string, searchType: string, service: Services, resultCount: number, skip: number = 0) {
         if (this.coordinator) {
-            const musicService = await this.coordinator.MusicServicesClient(service);
+            const musicService = await this.getMusicServiceClient(service);
             try {
                 const result = await musicService.Search({ id: searchType, term, index: skip, count: resultCount });
                 return result;
@@ -112,7 +150,7 @@ class SonosGroupManager {
 
     public async GetRootPage(service: Services) {
         if (this.coordinator) {
-            const musicService = await this.coordinator.MusicServicesClient(service);
+            const musicService = await this.getMusicServiceClient(service);
             const result = await musicService.GetMetadata({ id: 'root', index: 0, count: 15, recursive: true });
             return result;
         }
@@ -120,15 +158,25 @@ class SonosGroupManager {
 
     public async GetItemMetadata(service: Services, id: string) {
         if (this.coordinator) {
-            const musicService = await this.coordinator.MusicServicesClient(service);
-            const result = await musicService.GetExtendedMetadata({ id });
-            return result;
+            const musicService = await this.getMusicServiceClient(service);
+            try {
+                const result = await musicService.GetExtendedMetadata({ id });
+                return result;
+            } catch (e) {
+                if (this.isNoAuthTokenError(e)) {
+                    const authenticatedService = await this.authenticateService(service);
+                    if (authenticatedService) {
+                        return authenticatedService.GetExtendedMetadata({ id });
+                    }
+                }
+                console.log(e);
+            }
         }
     }
 
     public async GetMetadata(service: Services, id: string, skip: number = 0, count: number = 15) {
         if (this.coordinator) {
-            const musicService = await this.coordinator.MusicServicesClient(service);
+            const musicService = await this.getMusicServiceClient(service);
             const result = await musicService.GetMetadata({ id, index: skip, count, recursive: true });
             return result;
         }

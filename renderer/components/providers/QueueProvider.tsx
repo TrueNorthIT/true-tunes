@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as SonosContext from "./SonosContext";
 import type { TN_Track } from "../../models/Track";
 import type { TN_Album } from "@models/Album";
+import { extractTrackReference } from "../../utils/sonosUri";
 
 interface QueueContextType {
   currentTrackIndex: number;
@@ -34,13 +35,6 @@ export const QueueProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [followingQueue, setFollowingQueue] = useState<boolean>(true);
 
-  const extractSpotifyTrackUri = (sonosUri: string): string | null => {
-    if (!sonosUri) return null;
-    const match = sonosUri.match(/(spotify:track:[^?]+)/);
-    console.log("Extracted Spotify URI:", match ? match[1] : null);
-    return match ? match[1] : null;
-  };
-
   // Fetch Sonos queue and map URIs to full track objects
   const queueQuery = useQuery<TN_Track[], unknown, TN_Track[]>({
     queryKey: ["queue"],
@@ -50,9 +44,13 @@ export const QueueProvider: FC<{ children: ReactNode }> = ({ children }) => {
         raw.map((item) => {
           if (item.TrackUri === undefined)
             console.log("Undefined TrackUri for item:", item);
-          const uri = extractSpotifyTrackUri(item.TrackUri);
-          if (!uri) return Promise.resolve(null as unknown as TN_Track);
-          return sonosActions.getTrack(uri);
+          const trackReference = extractTrackReference(item.TrackUri);
+          if (!trackReference)
+            return Promise.resolve(null as unknown as TN_Track);
+          return sonosActions.getTrack(
+            trackReference.ref,
+            trackReference.serviceId
+          );
         })
       );
       console.log("Fetched queue:", tracks);
