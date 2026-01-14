@@ -2,8 +2,10 @@ import React, { createContext, useContext, useState } from "react";
 import type { FC, ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as SonosContext from "./SonosContext";
+import type { Track } from "@svrooij/sonos/lib/models";
 import type { TN_Track } from "../../models/Track";
 import type { TN_Album } from "@models/Album";
+import { Services } from "@enums/Services";
 
 interface QueueContextType {
   currentTrackIndex: number;
@@ -34,11 +36,37 @@ export const QueueProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [followingQueue, setFollowingQueue] = useState<boolean>(true);
 
-  const extractSpotifyTrackUri = (sonosUri: string): string | null => {
-    if (!sonosUri) return null;
-    const match = sonosUri.match(/(spotify:track:[^?]+)/);
-    console.log("Extracted Spotify URI:", match ? match[1] : null);
+  const safeDecode = (value?: string): string => {
+    if (!value) return "";
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+
+  const extractServiceTrackRef = (value?: string): string | null => {
+    if (!value) return null;
+    const decoded = safeDecode(value);
+    const match = decoded.match(
+      /((?:spotify|youtube|ytmusic):(?:track|video):[^?]+)/i
+    );
     return match ? match[1] : null;
+  };
+
+  const extractQueueTrackRef = (item: Track): string | null => {
+    return (
+      extractServiceTrackRef(item.ItemId) ??
+      extractServiceTrackRef(item.TrackUri)
+    );
+  };
+
+  const extractServiceId = (item: Track): number => {
+    const uri = item.TrackUri ?? "";
+    const match = uri.match(/(?:\?|&)sid=(\d+)/);
+    if (match) return Number(match[1]);
+    if (/youtube|ytmusic/i.test(uri)) return Services.YouTubeMusic;
+    return Services.Spotify;
   };
 
   // Fetch Sonos queue and map URIs to full track objects
@@ -50,9 +78,10 @@ export const QueueProvider: FC<{ children: ReactNode }> = ({ children }) => {
         raw.map((item) => {
           if (item.TrackUri === undefined)
             console.log("Undefined TrackUri for item:", item);
-          const uri = extractSpotifyTrackUri(item.TrackUri);
-          if (!uri) return Promise.resolve(null as unknown as TN_Track);
-          return sonosActions.getTrack(uri);
+          const trackRef = extractQueueTrackRef(item);
+          if (!trackRef) return Promise.resolve(null as unknown as TN_Track);
+          const serviceId = extractServiceId(item);
+          return sonosActions.getTrack(trackRef, serviceId);
         })
       );
       console.log("Fetched queue:", tracks);

@@ -1,5 +1,6 @@
 export enum Services {
     Spotify = 9,
     TIDAL = 174,
-    TuneIn = 333
+    TuneIn = 333,
+    YouTubeMusic = 233
 }

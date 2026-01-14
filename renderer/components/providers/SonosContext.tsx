@@ -88,10 +88,10 @@ interface SonosActions {
     skip?: number,
     count?: number
   ) => Promise<MediaList>;
-  getTrack: (ref: string) => Promise<TN_Track>;
-  getAlbum: (ref: string) => Promise<TN_Album>;
-  getArtist: (ref: string) => Promise<TN_Artist>;
-  getItemMetadata: (itemId: string) => Promise<MediaList>;
+  getTrack: (ref: string, service?: Services) => Promise<TN_Track>;
+  getAlbum: (ref: string, service?: Services) => Promise<TN_Album>;
+  getArtist: (ref: string, service?: Services) => Promise<TN_Artist>;
+  getItemMetadata: (itemId: string, service?: Services) => Promise<MediaList>;
   removeFromQueue: (index: number) => void;
   removeRangeFromQueue: (index: number, count: number) => void;
   utils: {
@@ -620,13 +620,13 @@ function createActions(
       metadataCache.set(key, metadata);
       return metadata;
     },
-    getItemMetadata: async (itemId) => {
+    getItemMetadata: async (itemId, service = Services.Spotify) => {
       if (itemId === undefined) return undefined;
       if (itemMetadataCache.has(itemId)) {
         return itemMetadataCache.get(itemId)!;
       }
       const itemMetadata = await sonos.GetItemMetadata(
-        Services.Spotify,
+        service,
         itemId
       );
       itemMetadataCache.set(itemId, itemMetadata);
@@ -638,13 +638,14 @@ function createActions(
     removeRangeFromQueue: (index, count) => {
       sonos.RemoveTrackRangeFromQueue(index, count);
     },
-    getTrack: async (ref) => {
+    getTrack: async (ref, service = Services.Spotify) => {
       if (!ref) return undefined;
-      if (trackCache.has(ref)) {
-        return trackCache.get(ref)!;
+      const trackKey = `${service}:${ref}`;
+      if (trackCache.has(trackKey)) {
+        return trackCache.get(trackKey)!;
       }
 
-      const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref))
+      const metatadata = (await sonos.GetItemMetadata(service, ref))
         .mediaMetadata[0] as ITrackEntity;
       const md = metatadata.trackMetadata;
       if (!md) console.log("No trackMetadata for ref:", ref);
@@ -660,19 +661,20 @@ function createActions(
         explicit: (metatadata.tags?.explicit ?? 0) === 1,
       };
 
-      trackCache.set(ref, track);
+      trackCache.set(trackKey, track);
       return track;
     },
-    getAlbum: async (ref) => {
+    getAlbum: async (ref, service = Services.Spotify) => {
       if (ref === undefined) return undefined;
-      if (albumCache.has(ref)) {
-        return albumCache.get(ref)!;
+      const albumKey = `${service}:${ref}`;
+      if (albumCache.has(albumKey)) {
+        return albumCache.get(albumKey)!;
       }
 
-      const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref))
+      const metatadata = (await sonos.GetItemMetadata(service, ref))
         .mediaCollection[0] as IAlbumEntity;
       const deep_metadata = await sonos.GetMetadata(
-        Services.Spotify,
+        service,
         ref,
         0,
         1000
@@ -682,7 +684,8 @@ function createActions(
       );
       const tn_TrackRefs: TN_TrackRef[] = [];
       for (const track of tn_Tracks) {
-        if (!trackCache.has(track.id)) trackCache.set(track.id, track);
+        const trackKey = `${service}:${track.id}`;
+        if (!trackCache.has(trackKey)) trackCache.set(trackKey, track);
         tn_TrackRefs.push({ id: track.id, title: track.title });
       }
 
@@ -703,16 +706,17 @@ function createActions(
         ),
       };
 
-      albumCache.set(ref, album);
+      albumCache.set(albumKey, album);
       return album;
     },
-    getArtist: async (ref) => {
+    getArtist: async (ref, service = Services.Spotify) => {
       if (ref === undefined) return undefined;
-      if (artistCache.has(ref)) {
-        return artistCache.get(ref)!;
+      const artistKey = `${service}:${ref}`;
+      if (artistCache.has(artistKey)) {
+        return artistCache.get(artistKey)!;
       }
 
-      const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref))
+      const metatadata = (await sonos.GetItemMetadata(service, ref))
         .mediaCollection[0] as IArtistEntity;
 
       const artist: TN_Artist = {
@@ -723,7 +727,7 @@ function createActions(
         heroArtURI: metatadata.albumArtURI,
       };
 
-      artistCache.set(ref, artist);
+      artistCache.set(artistKey, artist);
       return artist;
     },
     utils: {
