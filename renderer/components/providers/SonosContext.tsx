@@ -88,7 +88,7 @@ interface SonosActions {
     skip?: number,
     count?: number
   ) => Promise<MediaList>;
-  getTrack: (ref: string) => Promise<TN_Track>;
+  getTrack: (ref: string, serviceId?: Services | number) => Promise<TN_Track>;
   getAlbum: (ref: string) => Promise<TN_Album>;
   getArtist: (ref: string) => Promise<TN_Artist>;
   getItemMetadata: (itemId: string) => Promise<MediaList>;
@@ -638,13 +638,14 @@ function createActions(
     removeRangeFromQueue: (index, count) => {
       sonos.RemoveTrackRangeFromQueue(index, count);
     },
-    getTrack: async (ref) => {
+    getTrack: async (ref, serviceId = Services.Spotify) => {
       if (!ref) return undefined;
-      if (trackCache.has(ref)) {
-        return trackCache.get(ref)!;
+      const cacheKey = `${serviceId}:${ref}`;
+      if (trackCache.has(cacheKey)) {
+        return trackCache.get(cacheKey)!;
       }
 
-      const metatadata = (await sonos.GetItemMetadata(Services.Spotify, ref))
+      const metatadata = (await sonos.GetItemMetadata(serviceId, ref))
         .mediaMetadata[0] as ITrackEntity;
       const md = metatadata.trackMetadata;
       if (!md) console.log("No trackMetadata for ref:", ref);
@@ -660,7 +661,7 @@ function createActions(
         explicit: (metatadata.tags?.explicit ?? 0) === 1,
       };
 
-      trackCache.set(ref, track);
+      trackCache.set(cacheKey, track);
       return track;
     },
     getAlbum: async (ref) => {

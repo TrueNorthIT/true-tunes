@@ -8,6 +8,7 @@ import truenorth_logo from "@public/images/truenorth_logo.png";
 import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
 import { useSonosActions, useSonosState } from "@providers/SonosContext";
 import type { Track } from "@svrooij/sonos/lib/models";
+import { extractTrackReference } from "../../utils/sonosUri";
 
 export default function NowPlayingCard() {
   const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(
@@ -21,17 +22,13 @@ export default function NowPlayingCard() {
 
   const actions = useSonosActions();
   const state = useSonosState();
-  const extractSpotifyTrackUri = (sonosUri: string): string | null => {
-    if (!sonosUri) return null;
-    const match = sonosUri.match(/(spotify:track:[^?]+)/);
-    return match ? match[1] : null;
-  };
-
   useEffect(() => {
     const nowPlaying = state?.playbackState?.positionInfo
       ?.TrackMetaData as Track;
+    const trackReference = extractTrackReference(nowPlaying?.TrackUri);
+    if (!trackReference) return;
     actions
-      .getTrack(extractSpotifyTrackUri(nowPlaying?.TrackUri))
+      .getTrack(trackReference.ref, trackReference.serviceId)
       .then((track) => {
         console.log("Now Playing Track:", track);
         setAlbumName(track.album.name);
