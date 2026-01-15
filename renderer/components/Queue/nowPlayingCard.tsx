@@ -8,6 +8,7 @@ import truenorth_logo from "@public/images/truenorth_logo.png";
 import { useAsideBreakpoint } from "@providers/AsideBreakpointContext";
 import { useSonosActions, useSonosState } from "@providers/SonosContext";
 import type { Track } from "@svrooij/sonos/lib/models";
+import { Services } from "@enums/Services";
 
 export default function NowPlayingCard() {
   const [albumArtUri, setAlbumArtUri] = useState<string | StaticImageData>(
@@ -21,18 +22,51 @@ export default function NowPlayingCard() {
 
   const actions = useSonosActions();
   const state = useSonosState();
-  const extractSpotifyTrackUri = (sonosUri: string): string | null => {
-    if (!sonosUri) return null;
-    const match = sonosUri.match(/(spotify:track:[^?]+)/);
+  const safeDecode = (value?: string): string => {
+    if (!value) return "";
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+
+  const extractServiceTrackRef = (value?: string): string | null => {
+    if (!value) return null;
+    const decoded = safeDecode(value);
+    const match = decoded.match(
+      /((?:spotify|youtube|ytmusic):(?:track|video):[^?]+)/i
+    );
     return match ? match[1] : null;
+  };
+
+  const extractQueueTrackRef = (item?: Track): string | null => {
+    if (!item) return null;
+    return (
+      extractServiceTrackRef(item.ItemId) ??
+      extractServiceTrackRef(item.TrackUri)
+    );
+  };
+
+  const extractServiceId = (item?: Track): number => {
+    if (!item) return Services.Spotify;
+    const uri = item.TrackUri ?? "";
+    const match = uri.match(/(?:\?|&)sid=(\d+)/);
+    if (match) return Number(match[1]);
+    if (/youtube|ytmusic/i.test(uri)) return Services.YouTubeMusic;
+    return Services.Spotify;
   };
 
   useEffect(() => {
     const nowPlaying = state?.playbackState?.positionInfo
       ?.TrackMetaData as Track;
+    const trackRef = extractQueueTrackRef(nowPlaying);
+    if (!trackRef) return;
+    const serviceId = extractServiceId(nowPlaying);
     actions
-      .getTrack(extractSpotifyTrackUri(nowPlaying?.TrackUri))
+      .getTrack(trackRef, serviceId)
       .then((track) => {
+        if (!track) return;
         console.log("Now Playing Track:", track);
         setAlbumName(track.album.name);
         setTrackName(track.title);
